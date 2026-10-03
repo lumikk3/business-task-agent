@@ -1,0 +1,81 @@
+# Step 20：整套服务一键起。
+# ⚠️ 本机 WSL 内没有 docker（只有 Windows 端的 docker 桌面），
+#    这份 compose 未在本机验证过，属于目标部署形态。
+#
+#   docker compose up
+#
+# 拓扑：
+#   browser -> agent-api -> (MCP Client) -> mcp-order / mcp-logistics / mcp-aftersale
+#                     \-> postgres (业务数据 + agent_tasks/traces/eval_cases)
+#                      \-> redis    (session / agent context / task state)
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hermes
+      POSTGRES_PASSWORD: hermes
+      POSTGRES_DB: business
+    volumes:
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hermes -d business"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  mcp-order:
+    build: { context: ., dockerfile: docker/Dockerfile.mcp }
+    command: ["python", "-m", "app.mcp.servers.order_server"]
+    environment:
+      AGENT_DB_PATH: /app/data/business.db
+    volumes:
+      - ./data:/app/data
+
+  mcp-logistics:
+    build: { context: ., dockerfile: docker/Dockerfile.mcp }
+    command: ["python", "-m", "app.mcp.servers.logistics_server"]
+    environment:
+      AGENT_DB_PATH: /app/data/business.db
+    volumes:
+      - ./data:/app/data
+
+  mcp-aftersale:
+    build: { context: ., dockerfile: docker/Dockerfile.mcp }
+    command: ["python", "-m", "app.mcp.servers.aftersale_server"]
+    environment:
+      AGENT_DB_PATH: /app/data/business.db
+    volumes:
+      - ./data:/app/data
+
+  agent-api:
+    build: { context: ., dockerfile: docker/Dockerfile.api }
+    environment:
+      # 有 GLM_API_KEY 时走 LLM Agent，否则回退确定性 Runtime
+      GLM_API_KEY: ${GLM_API_KEY:-}
+      GLM_BASE_URL: ${GLM_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
+      GLM_MODEL: ${GLM_MODEL:-glm-4.6}
+      DATABASE_URL: postgresql://hermes:hermes@postgres:5432/business
+      REDIS_URL: redis://redis:6379/0
+      AGENT_RAG_EMBEDDINGS: ${AGENT_RAG_EMBEDDINGS:-}
+    ports:
+      - "8077:8077"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      mcp-order: { condition: service_started }
+      mcp-logistics: { condition: service_started }
+      mcp-aftersale: { condition: service_started }
+
+volumes:
+  pgdata:
+  redisdata:

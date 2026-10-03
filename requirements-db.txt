@@ -1,0 +1,5 @@
+# Step 18 可选依赖：PostgreSQL / Redis。
+# ⚠️ 本机无 Postgres/Redis 服务,这两个模块未在本机运行验证过。
+#   pip install -r requirements-db.txt
+psycopg[binary]
+redis

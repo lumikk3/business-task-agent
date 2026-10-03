@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Business Task Agent · 客服工作台</title>
+  <style>
+    body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+           max-width: 780px; margin: 40px auto; padding: 0 16px; color: #1f2328; }
+    h1 { font-size: 20px; }
+    #log { border: 1px solid #d0d7de; border-radius: 8px; padding: 12px;
+           height: 420px; overflow-y: auto; background: #fbfcfd; }
+    .u { color: #0969da; font-weight: 600; margin-top: 10px; }
+    .a { white-space: pre-wrap; margin: 4px 0 10px; }
+    .t { color: #6e7781; font-size: 12px; }
+    form { display: flex; gap: 8px; margin-top: 12px; }
+    input, select, button { font-size: 14px; padding: 8px; border-radius: 6px;
+                            border: 1px solid #d0d7de; }
+    input[name=message] { flex: 1; }
+    button { background: #1f883d; color: #fff; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Business Task Agent · 客服工作台</h1>
+  <p class="t">调用 <code>POST /api/chat</code>。需要二次确认的操作会提示「确认」。</p>
+  <div id="log"></div>
+  <form id="f">
+    <select name="user_id">
+      <option value="U10001">U10001 张三（待发货）</option>
+      <option value="U10002">U10002 李四（运输中）</option>
+      <option value="U10003" selected>U10003 王五（已签收耳机）</option>
+    </select>
+    <input name="message" value="我的耳机坏了，我想退货" autocomplete="off">
+    <button>发送</button>
+  </form>
+  <script>
+    const log = document.getElementById('log');
+    const session = 'web-' + Math.random().toString(36).slice(2, 8);
+    function add(cls, text, meta) {
+      const div = document.createElement('div');
+      div.className = cls; div.textContent = text; log.appendChild(div);
+      if (meta) { const m = document.createElement('div'); m.className = 't';
+                  m.textContent = meta; log.appendChild(m); }
+      log.scrollTop = log.scrollHeight;
+    }
+    const S = JSON.parse(sessionStorage.getItem('bta') || '{}');
+    S.session = S.session || session;
+    async function post(url, body) {
+      const r = await fetch(url, { method: 'POST',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      return r.json();
+    }
+    async function send(message, user_id) {
+      add('u', `用户(${user_id})：${message}`);
+      S.user_id = user_id;
+      sessionStorage.setItem('bta', JSON.stringify(S));
+      const data = await post('/api/chat',
+        { user_id, message, session_id: S.session });
+      add('a', data.answer, `status=${data.status}  tools=[${data.tools}]  ${data.mode}`);
+      return data;
+    }
+    document.getElementById('f').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user_id = e.target.user_id.value, message = e.target.message.value;
+      const data = await send(message, user_id);
+      if (data.status === 'awaiting_confirmation' &&
+          confirm('该操作需要确认，是否继续？')) {
+        const done = await post('/api/confirm',
+          { session_id: S.session, confirm: true });
+        add('a', done.answer, `status=${done.status}  tools=[${done.tools}]`);
+      }
+    });
+  </script>
+</body>
+</html>

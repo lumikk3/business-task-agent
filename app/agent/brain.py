@@ -39,6 +39,12 @@ def _order_keywords(text: str) -> list[str]:
 
 
 class RuleBasedBrain:
+    def __init__(self, quality_window_days: int = 15, no_reason_window_days: int = 7):
+        # 售后时效是业务配置：质量问题默认 15 天,无理由 7 天。把它做成可注入参数,
+        # 方便做回归实验（例如把 quality_window 调小就能复现一批退货资格误判）。
+        self.quality_window_days = quality_window_days
+        self.no_reason_window_days = no_reason_window_days
+
     def decide(self, ctx: TaskContext) -> Decision:
         handler = {
             Intent.ORDER_QUERY: self._decide_order_query,
@@ -213,8 +219,8 @@ class RuleBasedBrain:
         category = str(order.get("category") or "")
         if category == "食品" and not quality:
             return "category_blocked", "食品类商品不支持无理由退货", days
-        limit = 15 if quality else 7
-        label = "质量问题售后期限15天" if quality else "7天无理由退货期限"
+        limit = self.quality_window_days if quality else self.no_reason_window_days
+        label = "质量问题售后期限%s天" % limit if quality else "%s天无理由退货期限" % limit
         if days <= limit:
             return "eligible", f"签收{days}天,在{label}内", days
         return "overdue", f"签收{days}天,超过{label}", days

@@ -1,0 +1,15 @@
+# Step 20：MCP Server 镜像（order / logistics / aftersale 共用，靠 command 区分）。
+# ⚠️ 本机 WSL 内没有 docker，本文件未在本机构建/运行验证过。
+FROM python:3.12-slim
+
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 PYTHONPATH=/app AGENT_DB_PATH=/app/data/business.db
+
+COPY requirements-optional.txt ./
+RUN pip install --no-cache-dir -r requirements-optional.txt
+
+COPY app ./app
+COPY data ./data
+
+# 默认起订单服务；compose 会覆盖 command
+CMD ["python", "-m", "app.mcp.servers.order_server"]

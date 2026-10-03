@@ -12,10 +12,17 @@ import pytest
 
 from app.agent.llm_client import ChatClient, LLMConfig
 from app.agent.minimal_agent import MinimalAgent, build_system_prompt
+from app.agent.permissions import PermissionPolicy
 from app.memory.session import SessionMemory
 from app.rag.policy_rag import PolicyRAG
 from app.store import reset_store
-from app.tools.business import MINIMAL_TOOLS, RETURN_TOOLS, BusinessTools, build_minimal_registry
+from app.tools.business import (
+    MINIMAL_TOOLS,
+    RETURN_TOOLS,
+    BusinessTools,
+    build_minimal_registry,
+    build_registry,
+)
 from app.tools.registry import ToolExecutor
 
 REQUESTS: list[dict] = []
@@ -115,8 +122,9 @@ def test_loop_tool_then_answer(fake_llm):
     assert tool_msgs[0]["tool_call_id"] == "call_1"
     assert "O202609005" in tool_msgs[0]["content"]  # 种子数据里的订单
 
-    # 没有 Planner：步骤里不应出现 plan 节点
-    assert {s["type"] for s in result.steps} <= {"user", "tool", "answer"}
+    # 没有 Planner：步骤里不应出现 plan 节点（permission 是 Step 11 的权限门）
+    assert "plan" not in {s["type"] for s in result.steps}
+    assert {s["type"] for s in result.steps} <= {"user", "tool", "answer", "permission"}
 
 
 def test_unknown_tool_is_fed_back_not_fatal(fake_llm):
@@ -160,3 +168,101 @@ def test_memory_carries_task_state_across_turns(fake_llm):
     user_msg = next(m for m in REQUESTS[0]["messages"] if m["role"] == "user")
     assert "[会话上下文]" in user_msg["content"]
     assert order_id in user_msg["content"]
+
+
+# ---- Step 11: permission gate -----------------------------------------
+def _full_agent(base_url, policy=None, memory=None, max_steps=6):
+    """带全部 6 个工具（含 create_refund_request / create_human_ticket）的 agent。"""
+    tools = BusinessTools(reset_store(), policy_search=PolicyRAG().retrieve)
+    registry = build_registry(tools)
+    executor = ToolExecutor(registry, max_retries=1, timeout_s=2.0, sleep=lambda _s: None)
+    client = ChatClient(LLMConfig(base_url=base_url, api_key="test", model="glm-4.6"))
+    return MinimalAgent(client, registry, executor, max_steps=max_steps, memory=memory,
+                        permission_policy=policy)
+
+
+def test_permission_auto_executes_read_and_return(fake_llm):
+    """query_* 与 create_return 都是 AUTO —— 不打断流程。"""
+    _Handler.queue.append(_tool_call("create_return_request",
+                                     {"order_id": "O202609001", "reason": "耳机坏了"}, "c1"))
+    _Handler.queue.append(_answer("退货申请已创建。"))
+    result = _full_agent(fake_llm).run("耳机坏了,我要退货", user_id="U10001")
+
+    assert result.status == "completed"
+    modes = [s["mode"] for s in result.steps if s["type"] == "permission"]
+    assert modes == ["auto"]
+    assert result.tool_calls[0].name == "create_return_request"
+
+
+def test_permission_confirm_pauses_then_resumes(fake_llm):
+    """create_refund 中等金额 -> CONFIRM：先挂起,不执行;确认后再执行。"""
+    _Handler.queue.append(_tool_call("create_refund_request",
+                                     {"order_id": "O202609002", "amount": 300}, "c1"))
+    agent = _full_agent(fake_llm)
+    result = agent.run("我要退款300元", user_id="U10001", session_id="gate")
+
+    assert result.status == "awaiting_confirmation"
+    assert result.pending == {"tool": "create_refund_request",
+                              "arguments": {"order_id": "O202609002", "amount": 300},
+                              "reason": "金额300.0元需用户二次确认"}
+    assert result.tool_calls == []                      # 确认前绝不能执行
+
+    _Handler.queue.append(_answer("退款已提交。"))       # resume 后继续循环需要一次 LLM 响应
+    resumed = agent.resume("gate", confirm=True)
+    assert resumed.status == "completed"
+    assert any(c.name == "create_refund_request" and c.ok for c in resumed.tool_calls)
+
+
+def test_permission_confirm_can_be_cancelled(fake_llm):
+    _Handler.queue.append(_tool_call("create_refund_request",
+                                     {"order_id": "O202609002", "amount": 300}, "c1"))
+    agent = _full_agent(fake_llm)
+    agent.run("我要退款300元", user_id="U10001", session_id="gate2")
+    result = agent.resume("gate2", confirm=False)
+    assert result.status == "cancelled"
+    assert result.tool_calls == []                      # 取消后没有执行任何写操作
+
+
+def test_permission_human_approval_escalates_to_ticket(fake_llm):
+    """大额退款 -> HUMAN_APPROVAL：直接转人工,不执行退款。"""
+    _Handler.queue.append(_tool_call("create_refund_request",
+                                     {"order_id": "O202609002", "amount": 900}, "c1"))
+    result = _full_agent(fake_llm).run("我要退款900元", user_id="U10001")
+
+    assert result.status == "escalated"
+    assert "工单T" in result.answer
+    assert not any(c.name == "create_refund_request" for c in result.tool_calls)
+    assert result.tool_calls[-1].name == "create_human_ticket"
+
+
+def test_permission_thresholds_are_configurable(fake_llm):
+    """阈值是业务配置：把 confirm_max 压到 200 后,300 元直接转人工。"""
+    policy = PermissionPolicy(auto_max=50, confirm_max=200)
+    _Handler.queue.append(_tool_call("create_refund_request",
+                                     {"order_id": "O202609002", "amount": 300}, "c1"))
+    result = _full_agent(fake_llm, policy=policy).run("我要退款300元", user_id="U10001")
+    assert result.status == "escalated"
+
+
+# ---- Step 19: 同一轮多工具并发 -----------------------------------------
+def test_parallel_batch_executes_all_calls_in_one_round(fake_llm):
+    _Handler.queue.append({"choices": [{"message": {
+        "role": "assistant", "content": "",
+        "tool_calls": [
+            {"id": "c1", "type": "function", "function": {
+                "name": "query_order", "arguments": '{"user_id": "U10001"}'}},
+            {"id": "c2", "type": "function", "function": {
+                "name": "query_logistics", "arguments": '{"order_id": "O202609004"}'}},
+        ],
+    }}], "usage": {"total_tokens": 12}})
+    _Handler.queue.append(_answer("订单和物流都查到了。"))
+
+    agent = _agent(fake_llm)
+    agent.parallel_tools = True
+    result = agent.run("查订单和物流", user_id="U10001")
+
+    assert result.status == "completed"
+    assert [c.name for c in result.tool_calls] == ["query_order", "query_logistics"]
+    # 两个工具结果都必须按原顺序回灌,且带正确的 tool_call_id
+    tool_msgs = [m for m in REQUESTS[1]["messages"] if m["role"] == "tool"]
+    assert [m["tool_call_id"] for m in tool_msgs] == ["c1", "c2"]

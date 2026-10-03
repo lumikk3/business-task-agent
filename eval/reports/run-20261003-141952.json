@@ -1,0 +1,5056 @@
+{
+  "run_id": "run-20261003-141952",
+  "label": "rule(quality=1) 回归候选",
+  "created_at": "2026-10-03T14:19:52+00:00",
+  "fault_timeout": 0.0,
+  "fault_error": 0.0,
+  "metrics": {
+    "total": 200,
+    "intent_accuracy": 1.0,
+    "tool_selection_accuracy": 0.98,
+    "tool_argument_accuracy": 1.0,
+    "task_success_rate": 0.98,
+    "policy_compliance_rate": 1.0,
+    "overall_pass_rate": 0.98,
+    "avg_latency_ms": 1.6,
+    "total_tokens": 0
+  },
+  "cases": [
+    {
+      "id": "case001",
+      "input": "退款多久到账",
+      "user_id": "U10002",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002目前没有退货或退款记录。",
+      "trace_id": "T202610037DC35C",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.8,
+      "tokens": 0
+    },
+    {
+      "id": "case002",
+      "input": "推荐一部电影",
+      "user_id": "U10001",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003BA698A",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.13,
+      "tokens": 0
+    },
+    {
+      "id": "case003",
+      "input": "我的快递到哪里了?",
+      "user_id": "U10002",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002的物流状态:运输中(承运商中通,运单号ZTO9188057577)。最新轨迹:2026-09-26 09:00 武汉洪山转运中心。",
+      "trace_id": "T20261003B02305",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.4,
+      "tokens": 0
+    },
+    {
+      "id": "case004",
+      "input": "转接人工客服",
+      "user_id": "U10003",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270001。原因:转接人工客服。客服将在48小时内与您联系。",
+      "trace_id": "T20261003A54C96",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.73,
+      "tokens": 0
+    },
+    {
+      "id": "case005",
+      "input": "售后期限是多长时间",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《退货时效计算规则》·起算时间:\n- 7天无理由退货自签收之日起计算,签收当日不计入 - 质量问题售后期限自签收之日起计算\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003E7430A",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.88,
+      "tokens": 0
+    },
+    {
+      "id": "case006",
+      "input": "我的订单什么时候发货?",
+      "user_id": "U10001",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001:无线耳机(金额299.0元)—— 已付款,待发货,下单时间2026-09-26。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T2026100369BD8D",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.87,
+      "tokens": 0
+    },
+    {
+      "id": "case007",
+      "input": "转接人工客服",
+      "user_id": "U10002",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270002。原因:转接人工客服。客服将在48小时内与您联系。",
+      "trace_id": "T20261003E1C66B",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.64,
+      "tokens": 0
+    },
+    {
+      "id": "case008",
+      "input": "找人工客服",
+      "user_id": "U10002",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270003。原因:找人工客服。客服将在48小时内与您联系。",
+      "trace_id": "T2026100340A65E",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.59,
+      "tokens": 0
+    },
+    {
+      "id": "case009",
+      "input": "查下我的购买记录",
+      "user_id": "U10002",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002:茶叶礼盒 二代(金额175.08元)—— 已发货,下单时间2026-09-25。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T20261003F58197",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.81,
+      "tokens": 0
+    },
+    {
+      "id": "case010",
+      "input": "耳机类商品能退吗",
+      "user_id": "U10003",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《耳机类商品退款规则》·适用范围:\n适用于平台自营及第三方商家的耳机类商品。\n结合您的订单O10003(无线耳机),签收2天,在7天无理由退货期限内,可以申请退货。",
+      "trace_id": "T2026100326E202",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.48,
+      "tokens": 0
+    },
+    {
+      "id": "case011",
+      "input": "帮我查一下订单",
+      "user_id": "U10001",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001:无线耳机(金额299.0元)—— 已付款,待发货,下单时间2026-09-26。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T20261003CA68E4",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.88,
+      "tokens": 0
+    },
+    {
+      "id": "case012",
+      "input": "查一下退款状态",
+      "user_id": "U10003",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003目前没有退货或退款记录。",
+      "trace_id": "T2026100383FD7F",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.03,
+      "tokens": 0
+    },
+    {
+      "id": "case013",
+      "input": "投诉这个订单",
+      "user_id": "U10002",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270004。原因:投诉这个订单。客服将在48小时内与您联系。",
+      "trace_id": "T20261003005B06",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.6,
+      "tokens": 0
+    },
+    {
+      "id": "case014",
+      "input": "你好",
+      "user_id": "U10002",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003A3C671",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.11,
+      "tokens": 0
+    },
+    {
+      "id": "case015",
+      "input": "物流更新了吗",
+      "user_id": "U10003",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的物流状态:已签收(承运商京东物流,运单号JD4719696426)。最新轨迹:2026-09-25 18:30 北京朝阳。",
+      "trace_id": "T2026100370C09A",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.15,
+      "tokens": 0
+    },
+    {
+      "id": "case016",
+      "input": "讲个笑话",
+      "user_id": "U10002",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T202610034CD59A",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.12,
+      "tokens": 0
+    },
+    {
+      "id": "case017",
+      "input": "退款多久到账",
+      "user_id": "U10001",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001目前没有退货或退款记录。",
+      "trace_id": "T2026100311F2B4",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.82,
+      "tokens": 0
+    },
+    {
+      "id": "case018",
+      "input": "人工服务",
+      "user_id": "U10003",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270005。原因:人工服务。客服将在48小时内与您联系。",
+      "trace_id": "T20261003954D30",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.63,
+      "tokens": 0
+    },
+    {
+      "id": "case019",
+      "input": "这个我要投诉",
+      "user_id": "U10003",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270006。原因:这个我要投诉。客服将在48小时内与您联系。",
+      "trace_id": "T20261003B55111",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.57,
+      "tokens": 0
+    },
+    {
+      "id": "case020",
+      "input": "查一下退款状态",
+      "user_id": "U10002",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002目前没有退货或退款记录。",
+      "trace_id": "T202610032D71E8",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.85,
+      "tokens": 0
+    },
+    {
+      "id": "case021",
+      "input": "订单还没有发货吗",
+      "user_id": "U10002",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002:茶叶礼盒 二代(金额175.08元)—— 已发货,下单时间2026-09-25。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T2026100307FC3D",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.76,
+      "tokens": 0
+    },
+    {
+      "id": "case022",
+      "input": "现在几点了",
+      "user_id": "U10002",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003136280",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.11,
+      "tokens": 0
+    },
+    {
+      "id": "case023",
+      "input": "保修几天内有效",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《发票规则》·换开与红冲:\n- 发票信息有误可在开票后30天内申请换开 - 已开票订单发生退货,须先完成发票红冲再退款\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003C016B0",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.21,
+      "tokens": 0
+    },
+    {
+      "id": "case024",
+      "input": "这个耳机我不要了,退了吧",
+      "user_id": "U10003",
+      "expected_intent": "RETURN_REQUEST",
+      "actual_intent": "RETURN_REQUEST",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "退货申请已创建:申请单号R20260927001,订单O10003(无线耳机),原因:这个耳机我不要了,退了吧。退货物流与退款进度会通过消息通知您。",
+      "trace_id": "T2026100383EC7E",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 5.04,
+      "tokens": 0
+    },
+    {
+      "id": "case025",
+      "input": "1+1等于几",
+      "user_id": "U10002",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003E4708D",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.15,
+      "tokens": 0
+    },
+    {
+      "id": "case026",
+      "input": "什么时候能退钱",
+      "user_id": "U10002",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002目前没有退货或退款记录。",
+      "trace_id": "T20261003484ED3",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.94,
+      "tokens": 0
+    },
+    {
+      "id": "case027",
+      "input": "退钱要多久",
+      "user_id": "U10002",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002目前没有退货或退款记录。",
+      "trace_id": "T20261003B7C465",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.84,
+      "tokens": 0
+    },
+    {
+      "id": "case028",
+      "input": "查下我的购买记录",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T20261003812AD6",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.99,
+      "tokens": 0
+    },
+    {
+      "id": "case029",
+      "input": "质量问题能退几天",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《质量问题售后规则》·运费说明:\n质量问题退货运费由商家承担。\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003EC71B6",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.31,
+      "tokens": 0
+    },
+    {
+      "id": "case030",
+      "input": "我的快递现在什么状态",
+      "user_id": "U10002",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002的物流状态:运输中(承运商中通,运单号ZTO9188057577)。最新轨迹:2026-09-26 09:00 武汉洪山转运中心。",
+      "trace_id": "T2026100321C0B3",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.27,
+      "tokens": 0
+    },
+    {
+      "id": "case031",
+      "input": "物流信息查一下",
+      "user_id": "U10003",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的物流状态:已签收(承运商京东物流,运单号JD4719696426)。最新轨迹:2026-09-25 18:30 北京朝阳。",
+      "trace_id": "T202610037019C5",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.23,
+      "tokens": 0
+    },
+    {
+      "id": "case032",
+      "input": "我的包裹在哪",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T202610035DD467",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.16,
+      "tokens": 0
+    },
+    {
+      "id": "case033",
+      "input": "让客服联系我",
+      "user_id": "U10002",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270007。原因:让客服联系我。客服将在48小时内与您联系。",
+      "trace_id": "T20261003205F83",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.61,
+      "tokens": 0
+    },
+    {
+      "id": "case034",
+      "input": "快递到哪了",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T20261003026941",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.39,
+      "tokens": 0
+    },
+    {
+      "id": "case035",
+      "input": "帮我写首诗",
+      "user_id": "U10002",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003CB356C",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.16,
+      "tokens": 0
+    },
+    {
+      "id": "case036",
+      "input": "查下我的购买记录",
+      "user_id": "U10001",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001:无线耳机(金额299.0元)—— 已付款,待发货,下单时间2026-09-26。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T2026100378843B",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.85,
+      "tokens": 0
+    },
+    {
+      "id": "case037",
+      "input": "推荐一部电影",
+      "user_id": "U10003",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003FFAC15",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.12,
+      "tokens": 0
+    },
+    {
+      "id": "case038",
+      "input": "什么时候退款",
+      "user_id": "U10003",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的退货申请R20260927001(created)正在处理,退货签收后3个工作日内会发起退款。",
+      "trace_id": "T2026100324E816",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.87,
+      "tokens": 0
+    },
+    {
+      "id": "case039",
+      "input": "退款处理到哪一步了",
+      "user_id": "U10003",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的退货申请R20260927001(created)正在处理,退货签收后3个工作日内会发起退款。",
+      "trace_id": "T2026100351A83B",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.07,
+      "tokens": 0
+    },
+    {
+      "id": "case040",
+      "input": "退款处理到哪一步了",
+      "user_id": "U10001",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001目前没有退货或退款记录。",
+      "trace_id": "T202610033C64A6",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.02,
+      "tokens": 0
+    },
+    {
+      "id": "case041",
+      "input": "订单状态查一下",
+      "user_id": "U10002",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002:茶叶礼盒 二代(金额175.08元)—— 已发货,下单时间2026-09-25。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T2026100399EF64",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.97,
+      "tokens": 0
+    },
+    {
+      "id": "case042",
+      "input": "你会做饭吗",
+      "user_id": "U10002",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003D13CA8",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.23,
+      "tokens": 0
+    },
+    {
+      "id": "case043",
+      "input": "我的订单什么时候发货?",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T202610035C3111",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.86,
+      "tokens": 0
+    },
+    {
+      "id": "case044",
+      "input": "物流信息查一下",
+      "user_id": "U10002",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002的物流状态:运输中(承运商中通,运单号ZTO9188057577)。最新轨迹:2026-09-26 09:00 武汉洪山转运中心。",
+      "trace_id": "T20261003A0A552",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.11,
+      "tokens": 0
+    },
+    {
+      "id": "case045",
+      "input": "售后期限是多长时间",
+      "user_id": "U10003",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《退货时效计算规则》·起算时间:\n- 7天无理由退货自签收之日起计算,签收当日不计入 - 质量问题售后期限自签收之日起计算\n结合您的订单O10003(无线耳机),签收2天,在7天无理由退货期限内,可以申请退货。",
+      "trace_id": "T202610038FCA07",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.33,
+      "tokens": 0
+    },
+    {
+      "id": "case046",
+      "input": "让客服联系我",
+      "user_id": "U10001",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270008。原因:让客服联系我。客服将在48小时内与您联系。",
+      "trace_id": "T20261003F2A599",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.84,
+      "tokens": 0
+    },
+    {
+      "id": "case047",
+      "input": "我下单的东西什么时候发",
+      "user_id": "U10001",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001:无线耳机(金额299.0元)—— 已付款,待发货,下单时间2026-09-26。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T2026100378395F",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.82,
+      "tokens": 0
+    },
+    {
+      "id": "case048",
+      "input": "退款到账了吗",
+      "user_id": "U10003",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的退货申请R20260927001(created)正在处理,退货签收后3个工作日内会发起退款。",
+      "trace_id": "T20261003C9B9B5",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.89,
+      "tokens": 0
+    },
+    {
+      "id": "case049",
+      "input": "售后政策怎么规定的",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《特殊商品售后规则》·政策冲突:\n当多条政策规则冲突时(例如超期但确有质量问题),以人工审核结论为准。\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003013418",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.31,
+      "tokens": 0
+    },
+    {
+      "id": "case050",
+      "input": "这个还能不能退",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《预售商品规则》·定金与尾款:\n- 预售定金支付后,尾款需在约定时间内支付,逾期定金不退 - 尾款支付后按预售承诺时间发货\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T202610035E98CD",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.44,
+      "tokens": 0
+    },
+    {
+      "id": "case051",
+      "input": "物流信息查一下",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T202610037C39DC",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.35,
+      "tokens": 0
+    },
+    {
+      "id": "case052",
+      "input": "质量问题能退几天",
+      "user_id": "U10003",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《质量问题售后规则》·运费说明:\n质量问题退货运费由商家承担。\n结合您的订单O10003(无线耳机),签收2天,超过质量问题售后期限1天,已超过自助退货期限,可转人工审核。",
+      "trace_id": "T2026100330BD2E",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.69,
+      "tokens": 0
+    },
+    {
+      "id": "case053",
+      "input": "这个还能不能退",
+      "user_id": "U10003",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《预售商品规则》·定金与尾款:\n- 预售定金支付后,尾款需在约定时间内支付,逾期定金不退 - 尾款支付后按预售承诺时间发货\n结合您的订单O10003(无线耳机),签收2天,在7天无理由退货期限内,可以申请退货。",
+      "trace_id": "T2026100354967A",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.67,
+      "tokens": 0
+    },
+    {
+      "id": "case054",
+      "input": "快递到哪了",
+      "user_id": "U10003",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的物流状态:已签收(承运商京东物流,运单号JD4719696426)。最新轨迹:2026-09-25 18:30 北京朝阳。",
+      "trace_id": "T202610030A880D",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.2,
+      "tokens": 0
+    },
+    {
+      "id": "case055",
+      "input": "这个我要投诉",
+      "user_id": "U10002",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270009。原因:这个我要投诉。客服将在48小时内与您联系。",
+      "trace_id": "T202610035313FE",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.72,
+      "tokens": 0
+    },
+    {
+      "id": "case056",
+      "input": "我的订单处理好了吗",
+      "user_id": "U10002",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002:茶叶礼盒 二代(金额175.08元)—— 已发货,下单时间2026-09-25。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T20261003FBE178",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.87,
+      "tokens": 0
+    },
+    {
+      "id": "case057",
+      "input": "投诉这个订单",
+      "user_id": "U10003",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270010。原因:投诉这个订单。客服将在48小时内与您联系。",
+      "trace_id": "T20261003A04E58",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.66,
+      "tokens": 0
+    },
+    {
+      "id": "case058",
+      "input": "你会做饭吗",
+      "user_id": "U10001",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T2026100391AB57",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.21,
+      "tokens": 0
+    },
+    {
+      "id": "case059",
+      "input": "今天天气怎么样",
+      "user_id": "U10001",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T202610033B4B47",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.15,
+      "tokens": 0
+    },
+    {
+      "id": "case060",
+      "input": "这个耳机能退吗",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《耳机类商品退款规则》·退款规则:\n- 耳机类商品退款在退货商品签收后3个工作日内发起,按原支付渠道退回 - 退款金额以实付金额为准,不包含已使用的优惠券与积分 - 耳机类商品的赠品与配件需一并退回,缺失时按价值扣减 - 单笔金额超过1000元的耳机退款需人工审批\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T202610030180A4",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.76,
+      "tokens": 0
+    },
+    {
+      "id": "case061",
+      "input": "我要申请退换货",
+      "user_id": "U10003",
+      "expected_intent": "RETURN_REQUEST",
+      "actual_intent": "RETURN_REQUEST",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "退货申请已创建:申请单号R20260927002,订单O10003(无线耳机),原因:我要申请退换货。退货物流与退款进度会通过消息通知您。",
+      "trace_id": "T202610039A8206",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 5.41,
+      "tokens": 0
+    },
+    {
+      "id": "case062",
+      "input": "我要跟客服沟通",
+      "user_id": "U10003",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270011。原因:我要跟客服沟通。客服将在48小时内与您联系。",
+      "trace_id": "T202610035F9E86",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.71,
+      "tokens": 0
+    },
+    {
+      "id": "case063",
+      "input": "随便聊聊",
+      "user_id": "U10001",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T2026100367CE43",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.16,
+      "tokens": 0
+    },
+    {
+      "id": "case064",
+      "input": "明天会下雨吗",
+      "user_id": "U10001",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003F0BD25",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.14,
+      "tokens": 0
+    },
+    {
+      "id": "case065",
+      "input": "订单发货了没有",
+      "user_id": "U10002",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002:茶叶礼盒 二代(金额175.08元)—— 已发货,下单时间2026-09-25。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T20261003DBD1EF",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.91,
+      "tokens": 0
+    },
+    {
+      "id": "case066",
+      "input": "这个耳机能退吗",
+      "user_id": "U10002",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《耳机类商品退款规则》·退款规则:\n- 耳机类商品退款在退货商品签收后3个工作日内发起,按原支付渠道退回 - 退款金额以实付金额为准,不包含已使用的优惠券与积分 - 耳机类商品的赠品与配件需一并退回,缺失时按价值扣减 - 单笔金额超过1000元的耳机退款需人工审批\n您的订单O10002还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003AE0DEA",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.31,
+      "tokens": 0
+    },
+    {
+      "id": "case067",
+      "input": "耳机用了5天还能退吗?",
+      "user_id": "U10002",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《耳机类商品退款规则》·适用范围:\n适用于平台自营及第三方商家的耳机类商品。\n您的订单O10002还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003632361",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.33,
+      "tokens": 0
+    },
+    {
+      "id": "case068",
+      "input": "什么时候能退钱",
+      "user_id": "U10001",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001目前没有退货或退款记录。",
+      "trace_id": "T20261003BE5583",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.04,
+      "tokens": 0
+    },
+    {
+      "id": "case069",
+      "input": "现在几点了",
+      "user_id": "U10003",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003B9EDC0",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.16,
+      "tokens": 0
+    },
+    {
+      "id": "case070",
+      "input": "退款处理到哪一步了",
+      "user_id": "U10002",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002目前没有退货或退款记录。",
+      "trace_id": "T2026100368E235",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.86,
+      "tokens": 0
+    },
+    {
+      "id": "case071",
+      "input": "我要投诉",
+      "user_id": "U10001",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270012。原因:我要投诉。客服将在48小时内与您联系。",
+      "trace_id": "T202610034D29DB",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.74,
+      "tokens": 0
+    },
+    {
+      "id": "case072",
+      "input": "这个我要投诉",
+      "user_id": "U10001",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270013。原因:这个我要投诉。客服将在48小时内与您联系。",
+      "trace_id": "T20261003556ACC",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.64,
+      "tokens": 0
+    },
+    {
+      "id": "case073",
+      "input": "帮我查物流",
+      "user_id": "U10003",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的物流状态:已签收(承运商京东物流,运单号JD4719696426)。最新轨迹:2026-09-25 18:30 北京朝阳。",
+      "trace_id": "T202610036689AD",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.29,
+      "tokens": 0
+    },
+    {
+      "id": "case074",
+      "input": "推荐一部电影",
+      "user_id": "U10002",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T202610033D4469",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.14,
+      "tokens": 0
+    },
+    {
+      "id": "case075",
+      "input": "食品类商品适用什么售后规则",
+      "user_id": "U10003",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《食品类商品售后规则》·运费说明:\n食品质量问题退货运费由商家承担。\n结合您的订单O10003(无线耳机),签收2天,在7天无理由退货期限内,可以申请退货。",
+      "trace_id": "T20261003838929",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.66,
+      "tokens": 0
+    },
+    {
+      "id": "case076",
+      "input": "售后政策怎么规定的",
+      "user_id": "U10003",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《特殊商品售后规则》·政策冲突:\n当多条政策规则冲突时(例如超期但确有质量问题),以人工审核结论为准。\n结合您的订单O10003(无线耳机),签收2天,在7天无理由退货期限内,可以申请退货。",
+      "trace_id": "T2026100351DE00",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.74,
+      "tokens": 0
+    },
+    {
+      "id": "case077",
+      "input": "你好",
+      "user_id": "U10003",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T202610037B89EB",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.19,
+      "tokens": 0
+    },
+    {
+      "id": "case078",
+      "input": "客服在吗",
+      "user_id": "U10002",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270014。原因:客服在吗。客服将在48小时内与您联系。",
+      "trace_id": "T20261003950392",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.76,
+      "tokens": 0
+    },
+    {
+      "id": "case079",
+      "input": "查询退款进度",
+      "user_id": "U10001",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001目前没有退货或退款记录。",
+      "trace_id": "T202610039F2E44",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.87,
+      "tokens": 0
+    },
+    {
+      "id": "case080",
+      "input": "耳机坏了想退",
+      "user_id": "U10003",
+      "expected_intent": "RETURN_REQUEST",
+      "actual_intent": "RETURN_REQUEST",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_human_ticket"
+      ],
+      "expected_status": "completed",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270015。原因:订单O10003(签收2天,超过质量问题售后期限1天)且金额299元,超过自动处理范围,需人工审核。客服将在48小时内与您联系。",
+      "trace_id": "T20261003884172",
+      "ok_intent": true,
+      "ok_tools": false,
+      "ok_args": true,
+      "ok_status": false,
+      "ok_policy": true,
+      "passed": false,
+      "latency_ms": 4.65,
+      "tokens": 0
+    },
+    {
+      "id": "case081",
+      "input": "耳机类商品能退吗",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《耳机类商品退款规则》·适用范围:\n适用于平台自营及第三方商家的耳机类商品。\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T2026100329BA14",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.7,
+      "tokens": 0
+    },
+    {
+      "id": "case082",
+      "input": "这个还能不能退",
+      "user_id": "U10002",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《预售商品规则》·定金与尾款:\n- 预售定金支付后,尾款需在约定时间内支付,逾期定金不退 - 尾款支付后按预售承诺时间发货\n您的订单O10002还未签收,暂不涉及退货时效。",
+      "trace_id": "T202610036B1B93",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.41,
+      "tokens": 0
+    },
+    {
+      "id": "case083",
+      "input": "包裹配送到哪了",
+      "user_id": "U10002",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002的物流状态:运输中(承运商中通,运单号ZTO9188057577)。最新轨迹:2026-09-26 09:00 武汉洪山转运中心。",
+      "trace_id": "T20261003A2866C",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.31,
+      "tokens": 0
+    },
+    {
+      "id": "case084",
+      "input": "我的快递到货了吗",
+      "user_id": "U10003",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的物流状态:已签收(承运商京东物流,运单号JD4719696426)。最新轨迹:2026-09-25 18:30 北京朝阳。",
+      "trace_id": "T20261003FA7C64",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.19,
+      "tokens": 0
+    },
+    {
+      "id": "case085",
+      "input": "钱退回来了吗",
+      "user_id": "U10001",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001目前没有退货或退款记录。",
+      "trace_id": "T2026100381BC0C",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.89,
+      "tokens": 0
+    },
+    {
+      "id": "case086",
+      "input": "帮我办理退货",
+      "user_id": "U10003",
+      "expected_intent": "RETURN_REQUEST",
+      "actual_intent": "RETURN_REQUEST",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "退货申请已创建:申请单号R20260927003,订单O10003(无线耳机),原因:帮我办理退货。退货物流与退款进度会通过消息通知您。",
+      "trace_id": "T20261003A4587A",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.74,
+      "tokens": 0
+    },
+    {
+      "id": "case087",
+      "input": "查询配送进度",
+      "user_id": "U10003",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的物流状态:已签收(承运商京东物流,运单号JD4719696426)。最新轨迹:2026-09-25 18:30 北京朝阳。",
+      "trace_id": "T20261003658362",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.26,
+      "tokens": 0
+    },
+    {
+      "id": "case088",
+      "input": "快递签收了吗",
+      "user_id": "U10002",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002的物流状态:运输中(承运商中通,运单号ZTO9188057577)。最新轨迹:2026-09-26 09:00 武汉洪山转运中心。",
+      "trace_id": "T20261003F7FF2C",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.18,
+      "tokens": 0
+    },
+    {
+      "id": "case089",
+      "input": "我的退款还没到",
+      "user_id": "U10003",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的退货申请R20260927003(created)正在处理,退货签收后3个工作日内会发起退款。",
+      "trace_id": "T20261003395929",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.89,
+      "tokens": 0
+    },
+    {
+      "id": "case090",
+      "input": "售后规则是怎么规定的",
+      "user_id": "U10003",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《质量问题售后规则》·运费说明:\n质量问题退货运费由商家承担。\n结合您的订单O10003(无线耳机),签收2天,在7天无理由退货期限内,可以申请退货。",
+      "trace_id": "T20261003F084DE",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 6.05,
+      "tokens": 0
+    },
+    {
+      "id": "case091",
+      "input": "你是谁",
+      "user_id": "U10003",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T202610032B5B8F",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.18,
+      "tokens": 0
+    },
+    {
+      "id": "case092",
+      "input": "讲个笑话",
+      "user_id": "U10003",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T202610033288F7",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.25,
+      "tokens": 0
+    },
+    {
+      "id": "case093",
+      "input": "订单发货了吗",
+      "user_id": "U10002",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002:茶叶礼盒 二代(金额175.08元)—— 已发货,下单时间2026-09-25。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T2026100377D382",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.17,
+      "tokens": 0
+    },
+    {
+      "id": "case094",
+      "input": "1+1等于几",
+      "user_id": "U10001",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T202610033E8FA0",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.19,
+      "tokens": 0
+    },
+    {
+      "id": "case095",
+      "input": "你好",
+      "user_id": "U10001",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003E9C53D",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.17,
+      "tokens": 0
+    },
+    {
+      "id": "case096",
+      "input": "这个耳机能退吗",
+      "user_id": "U10003",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《耳机类商品退款规则》·退款规则:\n- 耳机类商品退款在退货商品签收后3个工作日内发起,按原支付渠道退回 - 退款金额以实付金额为准,不包含已使用的优惠券与积分 - 耳机类商品的赠品与配件需一并退回,缺失时按价值扣减 - 单笔金额超过1000元的耳机退款需人工审批\n结合您的订单O10003(无线耳机),签收2天,在7天无理由退货期限内,可以申请退货。",
+      "trace_id": "T202610034BFDDB",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.48,
+      "tokens": 0
+    },
+    {
+      "id": "case097",
+      "input": "售后规则是怎么规定的",
+      "user_id": "U10002",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《质量问题售后规则》·运费说明:\n质量问题退货运费由商家承担。\n您的订单O10002还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003AA0807",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.28,
+      "tokens": 0
+    },
+    {
+      "id": "case098",
+      "input": "我要投诉",
+      "user_id": "U10003",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270016。原因:我要投诉。客服将在48小时内与您联系。",
+      "trace_id": "T20261003E435DC",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.83,
+      "tokens": 0
+    },
+    {
+      "id": "case099",
+      "input": "我下单的东西什么时候发",
+      "user_id": "U10002",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002:茶叶礼盒 二代(金额175.08元)—— 已发货,下单时间2026-09-25。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T20261003117046",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.0,
+      "tokens": 0
+    },
+    {
+      "id": "case100",
+      "input": "包裹配送到哪了",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T202610030C1259",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.24,
+      "tokens": 0
+    },
+    {
+      "id": "case101",
+      "input": "什么时候能退钱",
+      "user_id": "U10003",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的退货申请R20260927003(created)正在处理,退货签收后3个工作日内会发起退款。",
+      "trace_id": "T20261003966E40",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.87,
+      "tokens": 0
+    },
+    {
+      "id": "case102",
+      "input": "唱首歌",
+      "user_id": "U10001",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003F3FD8C",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.15,
+      "tokens": 0
+    },
+    {
+      "id": "case103",
+      "input": "包裹配送到哪了",
+      "user_id": "U10003",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的物流状态:已签收(承运商京东物流,运单号JD4719696426)。最新轨迹:2026-09-25 18:30 北京朝阳。",
+      "trace_id": "T202610034F6035",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.25,
+      "tokens": 0
+    },
+    {
+      "id": "case104",
+      "input": "转人工",
+      "user_id": "U10003",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270017。原因:转人工。客服将在48小时内与您联系。",
+      "trace_id": "T20261003B09A46",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.65,
+      "tokens": 0
+    },
+    {
+      "id": "case105",
+      "input": "商品已经退回去了,什么时候退款?",
+      "user_id": "U10002",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002目前没有退货或退款记录。",
+      "trace_id": "T20261003CAA5BE",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.93,
+      "tokens": 0
+    },
+    {
+      "id": "case106",
+      "input": "订单还没有发货吗",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T20261003425C2C",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.84,
+      "tokens": 0
+    },
+    {
+      "id": "case107",
+      "input": "我的快递现在什么状态",
+      "user_id": "U10003",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的物流状态:已签收(承运商京东物流,运单号JD4719696426)。最新轨迹:2026-09-25 18:30 北京朝阳。",
+      "trace_id": "T20261003BB5E66",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.17,
+      "tokens": 0
+    },
+    {
+      "id": "case108",
+      "input": "今天天气怎么样",
+      "user_id": "U10002",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T2026100388319E",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.13,
+      "tokens": 0
+    },
+    {
+      "id": "case109",
+      "input": "退款到账了吗",
+      "user_id": "U10002",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002目前没有退货或退款记录。",
+      "trace_id": "T202610030F1F0F",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.8,
+      "tokens": 0
+    },
+    {
+      "id": "case110",
+      "input": "现在几点了",
+      "user_id": "U10001",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T2026100372A3BD",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.13,
+      "tokens": 0
+    },
+    {
+      "id": "case111",
+      "input": "超过7天还能退吗",
+      "user_id": "U10002",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《7天无理由退货规则》·不适用范围:\n- 食品类商品不支持无理由退货 - 已拆封的贴身用品、特殊定制商品不支持无理由退货 - 超过7天签收期限的商品不支持无理由退货\n您的订单O10002还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003FB6C68",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.01,
+      "tokens": 0
+    },
+    {
+      "id": "case112",
+      "input": "我要跟客服沟通",
+      "user_id": "U10001",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270018。原因:我要跟客服沟通。客服将在48小时内与您联系。",
+      "trace_id": "T20261003F70F55",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.68,
+      "tokens": 0
+    },
+    {
+      "id": "case113",
+      "input": "查询配送进度",
+      "user_id": "U10002",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002的物流状态:运输中(承运商中通,运单号ZTO9188057577)。最新轨迹:2026-09-26 09:00 武汉洪山转运中心。",
+      "trace_id": "T20261003CE5DDC",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.38,
+      "tokens": 0
+    },
+    {
+      "id": "case114",
+      "input": "保修几天内有效",
+      "user_id": "U10002",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《发票规则》·换开与红冲:\n- 发票信息有误可在开票后30天内申请换开 - 已开票订单发生退货,须先完成发票红冲再退款\n您的订单O10002还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003938327",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.45,
+      "tokens": 0
+    },
+    {
+      "id": "case115",
+      "input": "申请退货",
+      "user_id": "U10003",
+      "expected_intent": "RETURN_REQUEST",
+      "actual_intent": "RETURN_REQUEST",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "退货申请已创建:申请单号R20260927004,订单O10003(无线耳机),原因:申请退货。退货物流与退款进度会通过消息通知您。",
+      "trace_id": "T2026100327E034",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.98,
+      "tokens": 0
+    },
+    {
+      "id": "case116",
+      "input": "帮我写首诗",
+      "user_id": "U10003",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003BB6375",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.17,
+      "tokens": 0
+    },
+    {
+      "id": "case117",
+      "input": "快递什么时候到",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T202610037FF3D8",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.47,
+      "tokens": 0
+    },
+    {
+      "id": "case118",
+      "input": "找人工客服",
+      "user_id": "U10001",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270019。原因:找人工客服。客服将在48小时内与您联系。",
+      "trace_id": "T20261003A0FC25",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.89,
+      "tokens": 0
+    },
+    {
+      "id": "case119",
+      "input": "我的退款还没到",
+      "user_id": "U10001",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001目前没有退货或退款记录。",
+      "trace_id": "T202610032B2CAA",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.1,
+      "tokens": 0
+    },
+    {
+      "id": "case120",
+      "input": "快递签收了吗",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T20261003F86E8F",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.64,
+      "tokens": 0
+    },
+    {
+      "id": "case121",
+      "input": "商品已经退回去了,什么时候退款?",
+      "user_id": "U10001",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001目前没有退货或退款记录。",
+      "trace_id": "T2026100344A16F",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.0,
+      "tokens": 0
+    },
+    {
+      "id": "case122",
+      "input": "耳机类商品能退吗",
+      "user_id": "U10002",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《耳机类商品退款规则》·适用范围:\n适用于平台自营及第三方商家的耳机类商品。\n您的订单O10002还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003C43AEF",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.72,
+      "tokens": 0
+    },
+    {
+      "id": "case123",
+      "input": "售后政策怎么规定的",
+      "user_id": "U10002",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《特殊商品售后规则》·政策冲突:\n当多条政策规则冲突时(例如超期但确有质量问题),以人工审核结论为准。\n您的订单O10002还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003BA96B7",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.28,
+      "tokens": 0
+    },
+    {
+      "id": "case124",
+      "input": "我的快递到货了吗",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T20261003632A0F",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.28,
+      "tokens": 0
+    },
+    {
+      "id": "case125",
+      "input": "人工服务",
+      "user_id": "U10001",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270020。原因:人工服务。客服将在48小时内与您联系。",
+      "trace_id": "T202610031C270E",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.73,
+      "tokens": 0
+    },
+    {
+      "id": "case126",
+      "input": "你是谁",
+      "user_id": "U10001",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003432B08",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.15,
+      "tokens": 0
+    },
+    {
+      "id": "case127",
+      "input": "超过7天还能退吗",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《7天无理由退货规则》·不适用范围:\n- 食品类商品不支持无理由退货 - 已拆封的贴身用品、特殊定制商品不支持无理由退货 - 超过7天签收期限的商品不支持无理由退货\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T202610033C922A",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.45,
+      "tokens": 0
+    },
+    {
+      "id": "case128",
+      "input": "我的订单处理得怎么样了",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T202610035DEC95",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.03,
+      "tokens": 0
+    },
+    {
+      "id": "case129",
+      "input": "你是谁",
+      "user_id": "U10002",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T2026100369A284",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.16,
+      "tokens": 0
+    },
+    {
+      "id": "case130",
+      "input": "随便聊聊",
+      "user_id": "U10003",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003D9F155",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.18,
+      "tokens": 0
+    },
+    {
+      "id": "case131",
+      "input": "退款的钱到哪了",
+      "user_id": "U10002",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002目前没有退货或退款记录。",
+      "trace_id": "T20261003687282",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.94,
+      "tokens": 0
+    },
+    {
+      "id": "case132",
+      "input": "直接给我退货",
+      "user_id": "U10003",
+      "expected_intent": "RETURN_REQUEST",
+      "actual_intent": "RETURN_REQUEST",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "退货申请已创建:申请单号R20260927005,订单O10003(无线耳机),原因:直接给我退货。退货物流与退款进度会通过消息通知您。",
+      "trace_id": "T20261003AC5EC3",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.48,
+      "tokens": 0
+    },
+    {
+      "id": "case133",
+      "input": "食品类商品适用什么售后规则",
+      "user_id": "U10002",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《食品类商品售后规则》·运费说明:\n食品质量问题退货运费由商家承担。\n您的订单O10002还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003F550ED",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.25,
+      "tokens": 0
+    },
+    {
+      "id": "case134",
+      "input": "售后规则是怎么规定的",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《质量问题售后规则》·运费说明:\n质量问题退货运费由商家承担。\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003D8F9B1",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.5,
+      "tokens": 0
+    },
+    {
+      "id": "case135",
+      "input": "转人工",
+      "user_id": "U10001",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270021。原因:转人工。客服将在48小时内与您联系。",
+      "trace_id": "T20261003E157C0",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.76,
+      "tokens": 0
+    },
+    {
+      "id": "case136",
+      "input": "质量问题能退几天",
+      "user_id": "U10002",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《质量问题售后规则》·运费说明:\n质量问题退货运费由商家承担。\n您的订单O10002还未签收,暂不涉及退货时效。",
+      "trace_id": "T2026100398072F",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.11,
+      "tokens": 0
+    },
+    {
+      "id": "case137",
+      "input": "退款多久到账",
+      "user_id": "U10003",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的退货申请R20260927005(created)正在处理,退货签收后3个工作日内会发起退款。",
+      "trace_id": "T20261003E394E0",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.0,
+      "tokens": 0
+    },
+    {
+      "id": "case138",
+      "input": "看看我的订单",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T20261003709901",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.85,
+      "tokens": 0
+    },
+    {
+      "id": "case139",
+      "input": "我的快递到哪里了?",
+      "user_id": "U10003",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的物流状态:已签收(承运商京东物流,运单号JD4719696426)。最新轨迹:2026-09-25 18:30 北京朝阳。",
+      "trace_id": "T20261003D045E1",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.11,
+      "tokens": 0
+    },
+    {
+      "id": "case140",
+      "input": "1+1等于几",
+      "user_id": "U10003",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003F0C4D3",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.14,
+      "tokens": 0
+    },
+    {
+      "id": "case141",
+      "input": "我要找人工",
+      "user_id": "U10002",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270022。原因:我要找人工。客服将在48小时内与您联系。",
+      "trace_id": "T20261003164AD0",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.73,
+      "tokens": 0
+    },
+    {
+      "id": "case142",
+      "input": "客服在吗",
+      "user_id": "U10001",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270023。原因:客服在吗。客服将在48小时内与您联系。",
+      "trace_id": "T20261003D1BAE4",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.6,
+      "tokens": 0
+    },
+    {
+      "id": "case143",
+      "input": "查询配送进度",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T20261003E3F408",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.17,
+      "tokens": 0
+    },
+    {
+      "id": "case144",
+      "input": "商品已经退回去了,什么时候退款?",
+      "user_id": "U10003",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的退货申请R20260927005(created)正在处理,退货签收后3个工作日内会发起退款。",
+      "trace_id": "T20261003145C06",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.38,
+      "tokens": 0
+    },
+    {
+      "id": "case145",
+      "input": "什么时候退款",
+      "user_id": "U10001",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001目前没有退货或退款记录。",
+      "trace_id": "T20261003FE1C00",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.95,
+      "tokens": 0
+    },
+    {
+      "id": "case146",
+      "input": "物流更新了吗",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T20261003B8F5D4",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.23,
+      "tokens": 0
+    },
+    {
+      "id": "case147",
+      "input": "帮我查物流",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T20261003552175",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.08,
+      "tokens": 0
+    },
+    {
+      "id": "case148",
+      "input": "退钱要多久",
+      "user_id": "U10003",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的退货申请R20260927005(created)正在处理,退货签收后3个工作日内会发起退款。",
+      "trace_id": "T202610039FA2A6",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.82,
+      "tokens": 0
+    },
+    {
+      "id": "case149",
+      "input": "订单发货了吗",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T202610031BA3C8",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.8,
+      "tokens": 0
+    },
+    {
+      "id": "case150",
+      "input": "我要跟客服沟通",
+      "user_id": "U10002",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270024。原因:我要跟客服沟通。客服将在48小时内与您联系。",
+      "trace_id": "T202610030EA270",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.9,
+      "tokens": 0
+    },
+    {
+      "id": "case151",
+      "input": "查询退款进度",
+      "user_id": "U10002",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002目前没有退货或退款记录。",
+      "trace_id": "T202610039F9A66",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.92,
+      "tokens": 0
+    },
+    {
+      "id": "case152",
+      "input": "我的退款还没到",
+      "user_id": "U10002",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002目前没有退货或退款记录。",
+      "trace_id": "T202610032AEBD7",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.97,
+      "tokens": 0
+    },
+    {
+      "id": "case153",
+      "input": "耳机不能用,想退货",
+      "user_id": "U10003",
+      "expected_intent": "RETURN_REQUEST",
+      "actual_intent": "RETURN_REQUEST",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_human_ticket"
+      ],
+      "expected_status": "completed",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270025。原因:订单O10003(签收2天,超过质量问题售后期限1天)且金额299元,超过自动处理范围,需人工审核。客服将在48小时内与您联系。",
+      "trace_id": "T20261003B0E0AF",
+      "ok_intent": true,
+      "ok_tools": false,
+      "ok_args": true,
+      "ok_status": false,
+      "ok_policy": true,
+      "passed": false,
+      "latency_ms": 4.74,
+      "tokens": 0
+    },
+    {
+      "id": "case154",
+      "input": "快递什么时候到",
+      "user_id": "U10002",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002的物流状态:运输中(承运商中通,运单号ZTO9188057577)。最新轨迹:2026-09-26 09:00 武汉洪山转运中心。",
+      "trace_id": "T202610031A495B",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.16,
+      "tokens": 0
+    },
+    {
+      "id": "case155",
+      "input": "你会做饭吗",
+      "user_id": "U10003",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T202610032BA67B",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.17,
+      "tokens": 0
+    },
+    {
+      "id": "case156",
+      "input": "售后期是多久",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《耳机类商品售后规则》·退换政策:\n- 耳机类商品支持7天无理由退货(签收之日起7天内) - 耳机类商品质量问题售后期限为15天 - 已拆封的耳机仍可申请质量问题售后,需提供故障描述\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003EEA9AF",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.47,
+      "tokens": 0
+    },
+    {
+      "id": "case157",
+      "input": "找人工客服",
+      "user_id": "U10003",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270026。原因:找人工客服。客服将在48小时内与您联系。",
+      "trace_id": "T20261003CE39FE",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.65,
+      "tokens": 0
+    },
+    {
+      "id": "case158",
+      "input": "我要退掉这个订单",
+      "user_id": "U10003",
+      "expected_intent": "RETURN_REQUEST",
+      "actual_intent": "RETURN_REQUEST",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "退货申请已创建:申请单号R20260927006,订单O10003(无线耳机),原因:我要退掉这个订单。退货物流与退款进度会通过消息通知您。",
+      "trace_id": "T20261003C0E5C7",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.84,
+      "tokens": 0
+    },
+    {
+      "id": "case159",
+      "input": "订单还没有发货吗",
+      "user_id": "U10001",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001:无线耳机(金额299.0元)—— 已付款,待发货,下单时间2026-09-26。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T20261003A24B1A",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.83,
+      "tokens": 0
+    },
+    {
+      "id": "case160",
+      "input": "耳机有故障,退货",
+      "user_id": "U10003",
+      "expected_intent": "RETURN_REQUEST",
+      "actual_intent": "RETURN_REQUEST",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_human_ticket"
+      ],
+      "expected_status": "completed",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270027。原因:订单O10003(签收2天,超过质量问题售后期限1天)且金额299元,超过自动处理范围,需人工审核。客服将在48小时内与您联系。",
+      "trace_id": "T2026100315E963",
+      "ok_intent": true,
+      "ok_tools": false,
+      "ok_args": true,
+      "ok_status": false,
+      "ok_policy": true,
+      "passed": false,
+      "latency_ms": 4.85,
+      "tokens": 0
+    },
+    {
+      "id": "case161",
+      "input": "退款的钱到哪了",
+      "user_id": "U10001",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001目前没有退货或退款记录。",
+      "trace_id": "T202610031B0332",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.86,
+      "tokens": 0
+    },
+    {
+      "id": "case162",
+      "input": "订单状态查一下",
+      "user_id": "U10001",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001:无线耳机(金额299.0元)—— 已付款,待发货,下单时间2026-09-26。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T202610033892F8",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.77,
+      "tokens": 0
+    },
+    {
+      "id": "case163",
+      "input": "讲个笑话",
+      "user_id": "U10001",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003AC63E8",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.15,
+      "tokens": 0
+    },
+    {
+      "id": "case164",
+      "input": "钱退回来了吗",
+      "user_id": "U10003",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的退货申请R20260927006(created)正在处理,退货签收后3个工作日内会发起退款。",
+      "trace_id": "T20261003A492D5",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.44,
+      "tokens": 0
+    },
+    {
+      "id": "case165",
+      "input": "转接人工客服",
+      "user_id": "U10001",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270028。原因:转接人工客服。客服将在48小时内与您联系。",
+      "trace_id": "T2026100368DD1C",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.9,
+      "tokens": 0
+    },
+    {
+      "id": "case166",
+      "input": "快递到哪了",
+      "user_id": "U10002",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002的物流状态:运输中(承运商中通,运单号ZTO9188057577)。最新轨迹:2026-09-26 09:00 武汉洪山转运中心。",
+      "trace_id": "T20261003A3456F",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.34,
+      "tokens": 0
+    },
+    {
+      "id": "case167",
+      "input": "我的订单处理好了吗",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T20261003F07707",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.97,
+      "tokens": 0
+    },
+    {
+      "id": "case168",
+      "input": "帮我查一下订单",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T20261003C72AF1",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.84,
+      "tokens": 0
+    },
+    {
+      "id": "case169",
+      "input": "我的快递到货了吗",
+      "user_id": "U10002",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002的物流状态:运输中(承运商中通,运单号ZTO9188057577)。最新轨迹:2026-09-26 09:00 武汉洪山转运中心。",
+      "trace_id": "T2026100347D79D",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.29,
+      "tokens": 0
+    },
+    {
+      "id": "case170",
+      "input": "随便聊聊",
+      "user_id": "U10002",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T20261003EC2192",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.23,
+      "tokens": 0
+    },
+    {
+      "id": "case171",
+      "input": "投诉这个订单",
+      "user_id": "U10001",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270029。原因:投诉这个订单。客服将在48小时内与您联系。",
+      "trace_id": "T20261003809ACA",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.91,
+      "tokens": 0
+    },
+    {
+      "id": "case172",
+      "input": "我购买的东西什么时候寄出",
+      "user_id": "U10001",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001:无线耳机(金额299.0元)—— 已付款,待发货,下单时间2026-09-26。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T20261003D9D74C",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.85,
+      "tokens": 0
+    },
+    {
+      "id": "case173",
+      "input": "查一下退款状态",
+      "user_id": "U10001",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001目前没有退货或退款记录。",
+      "trace_id": "T202610034CBAD5",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.85,
+      "tokens": 0
+    },
+    {
+      "id": "case174",
+      "input": "我购买的东西什么时候寄出",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T2026100338CF2C",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.89,
+      "tokens": 0
+    },
+    {
+      "id": "case175",
+      "input": "唱首歌",
+      "user_id": "U10003",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T202610030A889C",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.15,
+      "tokens": 0
+    },
+    {
+      "id": "case176",
+      "input": "我的包裹在哪",
+      "user_id": "U10002",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002的物流状态:运输中(承运商中通,运单号ZTO9188057577)。最新轨迹:2026-09-26 09:00 武汉洪山转运中心。",
+      "trace_id": "T202610031926D9",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.91,
+      "tokens": 0
+    },
+    {
+      "id": "case177",
+      "input": "帮我查一下订单",
+      "user_id": "U10002",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002:茶叶礼盒 二代(金额175.08元)—— 已发货,下单时间2026-09-25。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T20261003698D45",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.9,
+      "tokens": 0
+    },
+    {
+      "id": "case178",
+      "input": "食品类商品适用什么售后规则",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《食品类商品售后规则》·运费说明:\n食品质量问题退货运费由商家承担。\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003B74C4B",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 4.06,
+      "tokens": 0
+    },
+    {
+      "id": "case179",
+      "input": "退款的钱到哪了",
+      "user_id": "U10003",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003的退货申请R20260927006(created)正在处理,退货签收后3个工作日内会发起退款。",
+      "trace_id": "T20261003486178",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.82,
+      "tokens": 0
+    },
+    {
+      "id": "case180",
+      "input": "我的快递现在什么状态",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T20261003ACB6E2",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.46,
+      "tokens": 0
+    },
+    {
+      "id": "case181",
+      "input": "订单发货了没有",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T202610036AD03D",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.27,
+      "tokens": 0
+    },
+    {
+      "id": "case182",
+      "input": "让客服联系我",
+      "user_id": "U10003",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270030。原因:让客服联系我。客服将在48小时内与您联系。",
+      "trace_id": "T202610034E5757",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.8,
+      "tokens": 0
+    },
+    {
+      "id": "case183",
+      "input": "唱首歌",
+      "user_id": "U10002",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T202610036D1D0B",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.17,
+      "tokens": 0
+    },
+    {
+      "id": "case184",
+      "input": "我要找人工",
+      "user_id": "U10003",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270031。原因:我要找人工。客服将在48小时内与您联系。",
+      "trace_id": "T202610034078DA",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.63,
+      "tokens": 0
+    },
+    {
+      "id": "case185",
+      "input": "人工服务",
+      "user_id": "U10002",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270032。原因:人工服务。客服将在48小时内与您联系。",
+      "trace_id": "T202610037D1649",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.57,
+      "tokens": 0
+    },
+    {
+      "id": "case186",
+      "input": "我的订单处理好了吗",
+      "user_id": "U10001",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001:无线耳机(金额299.0元)—— 已付款,待发货,下单时间2026-09-26。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T202610038DE7F4",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.85,
+      "tokens": 0
+    },
+    {
+      "id": "case187",
+      "input": "我要转人工",
+      "user_id": "U10001",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270033。原因:我要转人工。客服将在48小时内与您联系。",
+      "trace_id": "T202610038BE933",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.95,
+      "tokens": 0
+    },
+    {
+      "id": "case188",
+      "input": "订单状态查一下",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T20261003E2F3B7",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.22,
+      "tokens": 0
+    },
+    {
+      "id": "case189",
+      "input": "明天会下雨吗",
+      "user_id": "U10003",
+      "expected_intent": "UNKNOWN",
+      "actual_intent": "UNKNOWN",
+      "expected_tools": [],
+      "actual_tools": [],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "抱歉,我没有理解您的问题。您可以问我:订单什么时候发货、快递到哪里了、售后政策、退货、退款,或者要求人工客服。",
+      "trace_id": "T2026100334DD14",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.2,
+      "tokens": 0
+    },
+    {
+      "id": "case190",
+      "input": "耳机坏了,我要退货",
+      "user_id": "U10003",
+      "expected_intent": "RETURN_REQUEST",
+      "actual_intent": "RETURN_REQUEST",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_human_ticket"
+      ],
+      "expected_status": "completed",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270034。原因:订单O10003(签收2天,超过质量问题售后期限1天)且金额299元,超过自动处理范围,需人工审核。客服将在48小时内与您联系。",
+      "trace_id": "T2026100330A067",
+      "ok_intent": true,
+      "ok_tools": false,
+      "ok_args": true,
+      "ok_status": false,
+      "ok_policy": true,
+      "passed": false,
+      "latency_ms": 4.75,
+      "tokens": 0
+    },
+    {
+      "id": "case191",
+      "input": "我的订单处理得怎么样了",
+      "user_id": "U10002",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002:茶叶礼盒 二代(金额175.08元)—— 已发货,下单时间2026-09-25。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T202610036DA0B5",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.99,
+      "tokens": 0
+    },
+    {
+      "id": "case192",
+      "input": "我想退货",
+      "user_id": "U10003",
+      "expected_intent": "RETURN_REQUEST",
+      "actual_intent": "RETURN_REQUEST",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy",
+        "create_return_request"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "退货申请已创建:申请单号R20260927007,订单O10003(无线耳机),原因:我想退货。退货物流与退款进度会通过消息通知您。",
+      "trace_id": "T20261003660977",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 5.68,
+      "tokens": 0
+    },
+    {
+      "id": "case193",
+      "input": "我要转人工",
+      "user_id": "U10003",
+      "expected_intent": "HUMAN_SERVICE",
+      "actual_intent": "HUMAN_SERVICE",
+      "expected_tools": [
+        "create_human_ticket"
+      ],
+      "actual_tools": [
+        "create_human_ticket"
+      ],
+      "expected_status": "escalated",
+      "actual_status": "escalated",
+      "answer": "您的情况需要人工处理,已创建工单T202609270035。原因:我要转人工。客服将在48小时内与您联系。",
+      "trace_id": "T202610035F99B1",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 0.88,
+      "tokens": 0
+    },
+    {
+      "id": "case194",
+      "input": "帮我查物流",
+      "user_id": "U10002",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002的物流状态:运输中(承运商中通,运单号ZTO9188057577)。最新轨迹:2026-09-26 09:00 武汉洪山转运中心。",
+      "trace_id": "T202610035C611D",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.35,
+      "tokens": 0
+    },
+    {
+      "id": "case195",
+      "input": "耳机用了5天还能退吗?",
+      "user_id": "U10001",
+      "expected_intent": "AFTERSALE_POLICY",
+      "actual_intent": "AFTERSALE_POLICY",
+      "expected_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "actual_tools": [
+        "query_order",
+        "search_after_sales_policy"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "根据《耳机类商品退款规则》·适用范围:\n适用于平台自营及第三方商家的耳机类商品。\n您的订单O10001还未签收,暂不涉及退货时效。",
+      "trace_id": "T20261003AAEE27",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 5.02,
+      "tokens": 0
+    },
+    {
+      "id": "case196",
+      "input": "我下单的东西什么时候发",
+      "user_id": "U10003",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10003:无线耳机(金额299.0元)—— 已签收,下单时间2026-09-20。\n签收时间:2026-09-25。",
+      "trace_id": "T20261003E6F6EA",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.21,
+      "tokens": 0
+    },
+    {
+      "id": "case197",
+      "input": "钱退回来了吗",
+      "user_id": "U10002",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10002目前没有退货或退款记录。",
+      "trace_id": "T20261003FDB8A6",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.0,
+      "tokens": 0
+    },
+    {
+      "id": "case198",
+      "input": "我的快递到哪里了?",
+      "user_id": "U10001",
+      "expected_intent": "LOGISTICS_QUERY",
+      "actual_intent": "LOGISTICS_QUERY",
+      "expected_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "actual_tools": [
+        "query_order",
+        "query_logistics"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001的物流状态:待发货(承运商无,运单号无)。最新轨迹:暂无 。",
+      "trace_id": "T20261003CEA120",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.71,
+      "tokens": 0
+    },
+    {
+      "id": "case199",
+      "input": "退钱要多久",
+      "user_id": "U10001",
+      "expected_intent": "REFUND_QUERY",
+      "actual_intent": "REFUND_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001目前没有退货或退款记录。",
+      "trace_id": "T2026100331F9DE",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.18,
+      "tokens": 0
+    },
+    {
+      "id": "case200",
+      "input": "订单发货了吗",
+      "user_id": "U10001",
+      "expected_intent": "ORDER_QUERY",
+      "actual_intent": "ORDER_QUERY",
+      "expected_tools": [
+        "query_order"
+      ],
+      "actual_tools": [
+        "query_order"
+      ],
+      "expected_status": "completed",
+      "actual_status": "completed",
+      "answer": "订单O10001:无线耳机(金额299.0元)—— 已付款,待发货,下单时间2026-09-26。\n该订单尚未签收,预计付款后48小时内发货。",
+      "trace_id": "T2026100322EC6B",
+      "ok_intent": true,
+      "ok_tools": true,
+      "ok_args": true,
+      "ok_status": true,
+      "ok_policy": true,
+      "passed": true,
+      "latency_ms": 1.09,
+      "tokens": 0
+    }
+  ]
+}

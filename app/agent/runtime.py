@@ -32,6 +32,8 @@ class TaskResult:
     tool_calls: list[dict] = field(default_factory=list)
     risk_level: str = "LOW"
     pending: dict | None = None
+    tokens: int = 0
+    latency_ms: float = 0.0
 
     def to_dict(self) -> dict:
         return {
@@ -46,6 +48,8 @@ class TaskResult:
             "tool_calls": self.tool_calls,
             "risk_level": self.risk_level,
             "pending": self.pending,
+            "tokens": self.tokens,
+            "latency_ms": self.latency_ms,
         }
 
 
@@ -208,4 +212,6 @@ class AgentRuntime:
                         for name, obs in ctx.observations.items()],
             risk_level=str(ctx.risk_level),
             pending=ctx.slots.get("pending_decision"),
+            tokens=int(ctx.slots.get("tokens", 0)),
+            latency_ms=tracer.to_dict()["total_latency_ms"],
         )

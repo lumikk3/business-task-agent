@@ -15,6 +15,7 @@
 - [快速开始](#快速开始)
 - [业务数据（假的企业业务系统）](#业务数据假的企业业务系统)
 - [分阶段构建（Step 3 → Step 10）](#分阶段构建step-3--step-10)
+- [Step 11 → 20：权限 / MCP / Trace / Eval / 服务化](#step-11--20从能调工具到可上线的-agent-服务)
 - [六个核心场景](#六个核心场景)
 - [执行流程 / Agent Loop](#执行流程--agent-loop)
 - [目录结构](#目录结构)
@@ -64,17 +65,30 @@ python scripts/generate_policies.py
 # 3) Step 3~6：最小版 Agent（3+1 个工具、3 个基础问题 + 退货任务），需要 GLM_API_KEY
 python scripts/run_minimal_agent.py
 
-# 4) Step 7~10：Planner / 记忆 / 异常恢复（离线可跑）
+# 4) Step 7~13：Planner / 记忆 / 异常恢复 / 权限 / MCP / Trace
 python scripts/run_planner_demo.py
-python scripts/run_memory_agent.py      # 需 GLM_API_KEY
+python scripts/run_memory_agent.py        # 需 GLM_API_KEY
 python scripts/run_fault_demo.py
+python scripts/run_permission_demo.py
+python scripts/run_trace_demo.py
+python scripts/run_mcp_agent.py --probe   # 完整版去掉 --probe,需 GLM_API_KEY
 
-# 5) 完整版六场景 Demo（默认确定性 RuleBasedBrain，无需任何 API Key）
+# 5) Step 14~16：Eval / Bad Case / Regression（真实跑 200 条）
+python -m eval.evaluator.run_eval
+
+# 6) Step 17 / 19：HTTP 服务 与 并发
+python -m uvicorn app.api.server:app --port 8077   # http://localhost:8077/
+python scripts/run_async_demo.py
+
+# 7) 完整版六场景 Demo（确定性 RuleBasedBrain，无需 API Key）
 python scripts/run_demo.py
 
-# 6) 运行测试
+# 8) 运行测试
 python -m pytest -q
 ```
+
+> Step 12/17 需要可选依赖：`pip install -r requirements-optional.txt`（mcp、fastapi、uvicorn）。
+> Agent 核心（agent/tools/rag/memory/store）保持**零第三方依赖**。
 
 Demo 输出示例：
 
@@ -276,6 +290,190 @@ create_human_ticket  attempts=1  -> ok
 
 ---
 
+## Step 11 → 20：从「能调工具」到「可上线的 Agent 服务」
+
+> 状态说明：11 / 12 / 13 / 14-16 / 17 / 19 都在本机真实跑通过（下面都是实测输出）；
+> **18（Postgres/Redis）和 20（Docker）本机没有服务/Docker，只产出了代码与配置，
+> 未在本机验证**，详见 [DEPLOY.md](DEPLOY.md)。
+
+### Step 11：工具权限系统（受控地调用工具）
+
+```bash
+python scripts/run_permission_demo.py     # 离线,不需要 LLM
+```
+
+`Agent → PermissionManager → {YES → Tool | CONFIRM → 用户确认 | NO → Human}`，
+金额阈值可配置（`PermissionPolicy(auto_max, confirm_max)`）。实测：
+
+```text
+金额 50 元  ->  AUTO     工具链=['create_refund_request']  status=completed
+金额 250 元 ->  CONFIRM  挂起:操作「create_refund_request」需要您确认(金额250.0元需用户二次确认)
+                        用户确认后 工具链=['create_refund_request'] status=completed
+金额 900 元 ->  HUMAN    工具链=['create_human_ticket']  status=escalated
+                        已创建工单T202609270001,原因:金额900.0元超过500元,需人工审批
+```
+
+| 操作 | 模式 |
+| --- | --- |
+| `query_order` / `query_logistics` / `search_after_sales_policy` | AUTO |
+| `create_return_request` | AUTO |
+| `create_refund_request`（100~500 元） | CONFIRM（human-in-the-loop） |
+| `create_refund_request`（>500 元） | HUMAN_APPROVAL |
+
+最小版 Agent 也接了同一道门（`app/agent/minimal_agent.py`），所以 LLM 路径同样受控。
+
+### Step 12：把工具改造成 MCP
+
+```bash
+python scripts/run_mcp_agent.py --probe   # 只探测工具,不需要 LLM
+python scripts/run_mcp_agent.py           # 完整 Agent -> MCP -> DB
+```
+
+三个 MCP Server（独立进程，stdio）：`order-mcp` / `logistics-mcp` / `aftersale-mcp`。
+实测：
+
+```text
+[mcp] 已连接 3 个 MCP Server
+  - order-mcp: query_order, query_order_items
+  - logistics-mcp: query_logistics, query_delivery_status
+  - aftersale-mcp: create_return_request, create_refund_request, create_human_ticket
+用户: 我的耳机坏了,我想退货。
+  step1 [MCP] query_order({'user_id': 'U10003'}) -> ok
+  step2 [MCP] create_return_request({'order_id': 'O10003', ...}) -> ok
+  回答: 退货申请单号 R20260927001
+```
+
+关键是 Agent 侧**完全无感**：`MCPToolBridge.to_registry()` 把 MCP 工具转成标准
+`ToolRegistry`，所以权限门 / Trace / 并发照常工作。
+
+### Step 13：Trace（记录整个生命周期）
+
+```bash
+python scripts/run_trace_demo.py
+```
+
+```text
+T202610034EFC36   (total 5.84ms)
+├── user_input
+├── intent  (RETURN_REQUEST)
+├── plan
+├── decision  (query_order)
+├── permission  (mode=auto)
+├── tool  query_order  (1.38ms, retry=0)
+├── decision  (search_after_sales_policy)
+├── tool  search_after_sales_policy  (3.6ms, retry=0)
+├── decision  (create_return_request)
+├── tool  create_return_request  (0.52ms, retry=0)
+├── decision  (answer)
+└── final  (退货申请已创建…)
+```
+
+每条 span 记录 timestamp / node / input / output / tool / arguments / latency / tokens /
+error / retry_count，落 `traces/agent_traces.jsonl`。
+
+### Step 14 / 15 / 16：Eval / Bad Case / Regression
+
+```bash
+python -m eval.evaluator.run_eval                      # 200 cases,离线,确定性 brain
+python -m eval.evaluator.run_eval --limit 20 --brain llm   # 真 LLM 子集
+python -m eval.evaluator.run_eval --show-bad-cases
+```
+
+200 条 Case（7 类意图 × 多措辞 × 演示用户），跑的就是真实 Agent。基线实测：
+
+```text
+| Intent Accuracy   | 100.0% |
+| Tool Selection    | 100.0% |
+| Tool Arguments    | 100.0% |
+| Task Success      | 100.0% |
+| Policy Compliance | 100.0% |
+| Overall Pass      | 100.0% |
+| Avg Latency       | 1.55 ms |
+```
+
+> 这些数字来自本次真实运行（报告落 `eval/reports/`），不是编的。第一次跑基线是
+> **89.5% / 91.5% / 83.5%**，失败项暴露了 2 个真实缺陷（意图识别缺词、以及评测规格里
+> HUMAN 的禁区写错）—— 修完才到 100%。
+
+**Regression**：把「质量问题 15 天」这个业务规则改坏（改成 1 天）再跑一次并对比：
+
+```text
+baseline : rule(quality=15)  passed=200
+candidate: rule(quality=1)   passed=196
+  tool_selection_accuracy    ▼ -2.0%
+  task_success_rate          ▼ -2.0%
+新增回归 (pass -> fail): 4 ['case080', 'case153', 'case160', 'case190']
+⚠ 只看总体通过率会漏掉回归 —— 上面这些用例是变差的,必须逐条看。
+```
+
+Bad Case 会自动归类（Intent Classification / Tool Selection / Tool Argument /
+Task Execution / Policy Violation）并给出根因提示，落 `eval/bad_cases/bad_cases.jsonl`。
+
+### Step 17：FastAPI 服务
+
+```bash
+python -m uvicorn app.api.server:app --port 8077
+# 工作台: http://localhost:8077/    健康检查: /health
+```
+
+| 端点 | 说明 |
+| --- | --- |
+| `POST /api/chat` | `{user_id, message}` → `{task_id, status, answer, tools, pending}` |
+| `POST /api/confirm` | 处理权限门的二次确认 |
+| `GET /api/tasks/{task_id}` | 任务详情 |
+| `GET /api/traces/{task_id}` | 该任务的完整 trace |
+| `GET /api/eval/runs` | 历史评测报告 |
+| `GET /api/bad-cases` | Bad Case 列表 |
+| `GET /` | 极简客服工作台（含确认流程） |
+
+实测（LLM 模式）：
+
+```text
+POST /api/chat  {"user_id":"U10001","message":"请帮我给订单O10001退款200元"}
+-> {"status":"awaiting_confirmation","pending":{"tool":"create_refund_request",...},
+    "tools":["query_order"]}
+POST /api/confirm {"session_id":"s9","confirm":true}
+-> {"status":"completed","answer":"退款申请已成功创建…退款单号 RF20260927001",
+    "tools":["query_order","create_refund_request"]}
+```
+
+### Step 18：PostgreSQL + Redis ⚠️ 未在本机验证
+
+- `app/store_pg.py` —— `PgStore`，与 SQLite 版 `Store` **同方法签名**（`BusinessTools`
+  无需改动），含全部业务表 + `agent_tasks` / `agent_traces` / `eval_cases` / `bad_cases` DDL。
+- `app/memory/redis_store.py` —— `RedisSessionMemory`，与 `SessionMemory` 同接口，
+  多副本共享 Session / Agent Context / Task State。
+- 依赖 `requirements-db.txt`（psycopg / redis，均为惰性导入）。
+
+### Step 19：并发执行
+
+```bash
+python scripts/run_async_demo.py
+```
+
+```text
+串行 (Order -> Logistics -> Policy) :   909.0 ms
+并发 线程池 gather                  :   306.7 ms
+并发 asyncio.gather                 :   309.4 ms
+加速比: 串行/并发 = 2.96x
+```
+
+`app/agent/async_tools.py` 提供 `gather()` / `gather_async()`；最小版 Agent 打开
+`parallel_tools=True` 后，同一轮里多个「自动放行」的工具调用会并发执行，结果仍按原顺序
+回灌（有 confirm/human 的批次自动退回串行）。
+
+### Step 20：Docker ⚠️ 未在本机验证
+
+`docker-compose.yml`：`agent-api` + `postgres` + `redis` + `mcp-order` +
+`mcp-logistics` + `mcp-aftersale`（+ 由 API 直接托管的极简前端）。配
+`docker/Dockerfile.api`、`docker/Dockerfile.mcp`、`docker/postgres/init.sql`。
+
+```bash
+docker compose up --build      # 目标形态;本机(WSL2)无 docker,未验证
+```
+
+---
+
 ## 六个核心场景
 
 | # | 场景 | 示例输入 | Agent 动作 |
@@ -347,11 +545,19 @@ business-task-agent/
 │   ├── memory/
 │   │   ├── context.py            # TaskContext + MemoryStore（完整版）
 │   │   └── session.py            # SessionMemory（最小版，dict→可换 Redis）
-│   ├── trace/tracer.py           # Tracer / Span（JSONL 落盘）
-│   └── store.py                  # SQLite 数据层（种子 / 生成库 / 临时副本）
+│   ├── trace/
+│   │   ├── tracer.py             # Tracer / Span（JSONL 落盘）
+│   │   └── view.py               # Trace 树状渲染
+│   ├── api/server.py             # Step 17：FastAPI 服务（+ static/ 工作台）
+│   ├── mcp/
+│   │   ├── bridge.py             # Step 12：MCP Client 桥接 -> ToolRegistry
+│   │   └── servers/              # order / logistics / aftersale 三台 MCP Server
+│   ├── store.py                  # SQLite 数据层（种子 / 生成库 / 临时副本）
+│   └── store_pg.py               # Step 18：PostgreSQL 版（未在本机验证）
 ├── data/
 │   ├── business.db               # 生成的"假企业业务系统"（SQLite）
 │   └── policies/*.md             # 售后知识库（66 份规则文档）
+├── eval/                         # Step 14~16：dataset / evaluator / reports / bad_cases
 ├── scripts/
 │   ├── generate_data.py          # 生成业务数据
 │   ├── generate_policies.py      # 生成售后知识库
@@ -359,10 +565,17 @@ business-task-agent/
 │   ├── run_planner_demo.py       # Step 7：Planner
 │   ├── run_memory_agent.py       # Step 9：多轮记忆
 │   ├── run_fault_demo.py         # Step 10：故障注入 / Retry / 人工接管
+│   ├── run_permission_demo.py    # Step 11：AUTO / CONFIRM / HUMAN
+│   ├── run_mcp_agent.py          # Step 12：Agent -> MCP -> DB
+│   ├── run_trace_demo.py         # Step 13：Trace 树
+│   ├── run_async_demo.py         # Step 19：串行 vs 并发
 │   └── run_demo.py               # 完整版六场景 Demo 入口
-├── tests/                        # 66 个测试
-├── eval/                         # 评测数据集 / 评测器 / 报告（预留）
-└── docker/                       # 容器化（预留）
+├── tests/                        # 94 个测试
+├── docker/                       # Step 20：Dockerfile + postgres/init.sql（未验证）
+├── docker-compose.yml            # Step 20：一键起（未验证）
+├── requirements-optional.txt     # mcp / fastapi / uvicorn
+├── requirements-db.txt           # psycopg / redis（未验证）
+└── DEPLOY.md                     # 部署说明 + 本机验证状态
 ```
 
 ---
@@ -498,6 +711,7 @@ error / retry_count`，供后续 Eval 引擎与 Bad Case 分析回放整条执�
 | `OPENAI_API_KEY` | 回退密钥；设置后 `run_demo.py` 使用 `OpenAIBrain` | 未设置 |
 | `OPENAI_BASE_URL` / `OPENAI_MODEL` | 回退端点 / 模型 | `https://api.openai.com/v1` / `gpt-4o-mini` |
 | `AGENT_DB_PATH` | 业务库路径（`open_store()`） | `data/business.db` |
+| `DATABASE_URL` / `REDIS_URL` | Step 18：Postgres / Redis 连接串（⚠️ 未在本机验证） | 见 `DEPLOY.md` |
 | `AGENT_DEMO_TODAY` | 覆盖 Demo 的「今天」（`YYYY-MM-DD`），影响时效判断 | `2026-09-27` |
 
 运行时参数（如 `AgentRuntime(max_steps=8)`、`ToolExecutor(max_retries, timeout_s,
@@ -509,7 +723,7 @@ backoff_base, backoff_max)`、`PermissionPolicy(auto_max, confirm_max)`）均可
 ## 测试
 
 ```bash
-python -m pytest -q          # 66 passed
+python -m pytest -q          # 94 passed
 ```
 
 覆盖范围（`tests/`）：
@@ -517,10 +731,14 @@ python -m pytest -q          # 66 passed
 | 文件 | 覆盖 |
 | --- | --- |
 | `test_agent_runtime.py` | 六个场景端到端、多轮记忆、权限分级、二次确认后 resume、工具失败 Fallback、Trace 链路完整性 |
-| `test_minimal_agent.py` | 最小版 3/4 工具、无 Planner 的 LLM↔Tool 循环、工具结果回灌、未知工具容错、最大步数、动态提示词、跨轮记忆（本地 fake server，无网络） |
+| `test_minimal_agent.py` | 最小版 3/4 工具、无 Planner 的 LLM↔Tool 循环、工具结果回灌、未知工具容错、最大步数、动态提示词、跨轮记忆、**权限门（AUTO/CONFIRM/HUMAN）、同轮并发** |
 | `test_data_generator.py` | 精确规模（1000/3000/5000/5000/500）、确定性、引用完整性、演示订单干净、重复生成不累加 |
 | `test_rag_pipeline.py` | HashingEmbedder 确定性与相似度、GLMEmbedder（假 client）、余弦索引排序、知识库规模、RAG 流水线 |
 | `test_faults.py` | 故障注入不改动原注册表、重试耗尽 → 人工工单、只影响指定工具、seed 可复现 |
+| `test_trace_and_async.py` | Trace 树渲染、并发保序且结果一致、并发确实更快、asyncio 版本 |
+| `test_mcp_bridge.py` | 真实拉起 3 台 MCP Server、工具发现、入参 schema 正确、stdio 往返调用（无 mcp 包时 skip） |
+| `test_eval_harness.py` | 数据集规模/确定性、真实评测指标、Bad Case 分类、Regression pass→fail 检测 |
+| `test_deploy_artifacts.py` | DDL 与 init.sql 表名一致、PgStore 与 Store 同接口、无依赖也能 import、compose/Dockerfile/requirements 齐备 |
 | `test_intents.py` | 七类意图识别与优先级 |
 | `test_llm_brain.py` | LLM Brain 解析 tool_calls / 最终回答（本地 fake server，无网络） |
 | `test_policy_rag.py` | query rewrite、检索与 rerank、政策命中 |
@@ -542,6 +760,16 @@ python -m pytest -q          # 66 passed
 - **Step 8** ✅ RAG：66 份规则文档 + Embedding/向量检索/Rerank
 - **Step 9** ✅ Context / Memory：跨轮记住任务状态
 - **Step 10** ✅ 异常恢复：故障注入 + Retry + Fallback + 人工接管
+- **Step 11** ✅ 权限系统：AUTO / CONFIRM / HUMAN_APPROVAL
+- **Step 12** ✅ 工具 MCP 化：Order / Logistics / AfterSale 三台 MCP Server
+- **Step 13** ✅ Trace：整个生命周期的树状链路
+- **Step 14** ✅ Eval：200 条 Case + Intent/Tool/Success/Compliance 指标
+- **Step 15** ✅ Bad Case：自动归类 + 根因提示
+- **Step 16** ✅ Regression：pass→fail 逐条对比
+- **Step 17** ✅ FastAPI：`/api/chat` 等 6 个端点 + 工作台
+- **Step 18** ⚠️ PostgreSQL + Redis：代码与 DDL 已备，**本机无服务，未验证**
+- **Step 19** ✅ 异步：并发执行独立工具调用（2.96x）
+- **Step 20** ⚠️ Docker：compose 与 Dockerfile 已备，**本机无 docker，未验证**
 - **V1（已完成）** Python / OpenAI 兼容 LLM API / SQLite / 简单 Tool Calling / RAG
 - **V2** FastAPI / PostgreSQL / Redis / Agent Runtime / Trace
 - **V3** MCP / Permission / Human-in-the-loop / Retry / Fallback

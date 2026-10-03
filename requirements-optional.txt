@@ -1,0 +1,7 @@
+# 可选依赖（Step 12 MCP / Step 17 API）。
+# Agent 核心（app/agent, tools, rag, memory, store）保持零第三方依赖；
+# 这些只在对应的可选功能里用到：
+#   pip install -r requirements-optional.txt
+mcp
+fastapi
+uvicorn

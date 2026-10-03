@@ -6,12 +6,12 @@ V3) does not change the agent core.
 """
 from __future__ import annotations
 
-from app.store import Store
+from app.store import BusinessStore
 from app.tools.registry import RiskLevel, ToolRegistry, ToolSpec
 
 
 class BusinessTools:
-    def __init__(self, store: Store, policy_search=None):
+    def __init__(self, store: BusinessStore, policy_search=None):
         self.store = store
         # policy_search: callable(query) -> list[dict], wired to the RAG module
         self.policy_search = policy_search

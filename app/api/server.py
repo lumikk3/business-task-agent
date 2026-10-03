@@ -28,10 +28,10 @@ from app.agent.llm_client import ChatClient, has_llm_credentials, resolve_llm_co
 from app.agent.minimal_agent import MinimalAgent
 from app.agent.permissions import PermissionPolicy
 from app.agent.runtime import AgentRuntime
-from app.data.generator import DEFAULT_DB_PATH, generate
+from app.backend import (backend_names, ensure_sqlite_seed, open_business_store,
+                         open_session_memory)
 from app.memory.context import MemoryStore
 from app.rag.policy_rag import PolicyRAG
-from app.store import open_scratch_store
 from app.tools.business import BusinessTools, build_registry
 from app.tools.registry import ToolExecutor
 
@@ -65,15 +65,16 @@ class AgentService:
     def _ensure(self) -> None:
         if self._minimal is not None or self._runtime is not None:
             return
-        if not Path(DEFAULT_DB_PATH).exists():
-            generate(DEFAULT_DB_PATH)
-        store = open_scratch_store(str(DEFAULT_DB_PATH))
+        # 有 DATABASE_URL 走 PostgreSQL，否则走 SQLite 临时副本（Step 18）
+        ensure_sqlite_seed()
+        store = open_business_store(scratch=True)
         tools = BusinessTools(store, policy_search=PolicyRAG().retrieve)
         if has_llm_credentials():
             registry = build_registry(tools)          # 完整 6 工具,权限门才有意义
             executor = ToolExecutor(registry, max_retries=2, timeout_s=5.0)
             self._minimal = MinimalAgent(
                 ChatClient(resolve_llm_config()), registry, executor,
+                memory=open_session_memory(),         # 有 REDIS_URL 走 Redis
                 permission_policy=PermissionPolicy(), trace_dir=_trace_dir())
             self._mode = "llm"
         else:
@@ -165,7 +166,9 @@ app = FastAPI(title="Business Task Agent API", version="1.0")
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "mode": SERVICE._mode or "uninitialized"}
+    payload = {"status": "ok", "mode": SERVICE._mode or "uninitialized"}
+    payload.update(backend_names())          # business_store / session_memory
+    return payload
 
 
 @app.get("/", response_class=HTMLResponse)

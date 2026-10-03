@@ -59,6 +59,31 @@ def test_requirements_files_list_optional_stack():
     assert "psycopg" in db and "redis" in db
 
 
+def test_backend_factories_switch_purely_on_env(monkeypatch):
+    """Step 18 的接线：只靠环境变量切换后端,默认不引入任何服务依赖。"""
+    from app import backend
+    from app.memory.redis_store import RedisSessionMemory
+    from app.memory.session import SessionMemory
+    from app.store import Store
+
+    for var in ("DATABASE_URL", "POSTGRES_DSN", "REDIS_URL"):
+        monkeypatch.delenv(var, raising=False)
+    assert backend.backend_names() == {"business_store": "sqlite",
+                                       "session_memory": "in-process"}
+    assert isinstance(backend.open_business_store(scratch=True), Store)
+    assert isinstance(backend.open_session_memory(), SessionMemory)
+
+    # 只设 REDIS_URL 就切 Redis(构造时不连服务器,所以不需要真的起 Redis)
+    monkeypatch.setenv("REDIS_URL", "redis://127.0.0.1:6399/0")
+    assert isinstance(backend.open_session_memory(), RedisSessionMemory)
+    assert backend.backend_names()["session_memory"] == "redis"
+
+    # 只设 DATABASE_URL 就切 Postgres（驱动缺失/连不上时才在实例化阶段报错）
+    monkeypatch.delenv("REDIS_URL")
+    monkeypatch.setenv("DATABASE_URL", "postgresql://x@127.0.0.1:1/x")
+    assert backend.backend_names()["business_store"] == "postgres"
+
+
 def test_mcp_servers_are_importable_and_register_tools():
     import importlib
 

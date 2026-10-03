@@ -1,13 +1,19 @@
 # Step 20：整套服务一键起。
-# ⚠️ 本机 WSL 内没有 docker（只有 Windows 端的 docker 桌面），
-#    这份 compose 未在本机验证过，属于目标部署形态。
 #
-#   docker compose up
+# 前置：在 Windows 的 Docker Desktop 里开启本 WSL 发行版的集成
+#       （Settings -> Resources -> WSL Integration -> 勾选本发行版 -> Apply & Restart），
+#       然后 `docker version` 能打印版本号即可。保姆级步骤见 DEPLOY.md §2。
+#
+#   cp .env.example .env && docker compose up --build
 #
 # 拓扑：
 #   browser -> agent-api -> (MCP Client) -> mcp-order / mcp-logistics / mcp-aftersale
 #                     \-> postgres (业务数据 + agent_tasks/traces/eval_cases)
 #                      \-> redis    (session / agent context / task state)
+#
+# agent-api 通过 DATABASE_URL / REDIS_URL 真的使用下面这两个服务
+# （app/backend.py 的后端工厂），不是摆设。本机未装 Docker 时，
+# 可用 scripts/dev_services.sh + uvicorn 达到同样效果（DEPLOY.md §1 路线 A）。
 services:
   postgres:
     image: postgres:16-alpine
@@ -64,6 +70,7 @@ services:
       GLM_API_KEY: ${GLM_API_KEY:-}
       GLM_BASE_URL: ${GLM_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
       GLM_MODEL: ${GLM_MODEL:-glm-4.6}
+      # 这两个变量让 app/backend.py 真的切到 Postgres + Redis
       DATABASE_URL: postgresql://hermes:hermes@postgres:5432/business
       REDIS_URL: redis://redis:6379/0
       AGENT_RAG_EMBEDDINGS: ${AGENT_RAG_EMBEDDINGS:-}

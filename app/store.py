@@ -13,6 +13,7 @@ import tempfile
 import threading
 from datetime import date
 from pathlib import Path
+from typing import Protocol
 
 # Fixed "today" for the demo so policy checks (7-day / 15-day windows) are
 # deterministic in tests and demos. Override with AGENT_DEMO_TODAY=YYYY-MM-DD.
@@ -95,6 +96,40 @@ CREATE TABLE IF NOT EXISTS tickets (
 
 # Public alias so the data generator can create the same tables in a fresh DB.
 SCHEMA = _SCHEMA
+
+
+class BusinessStore(Protocol):
+    """业务数据层契约（Step 18）。
+
+    ``Store``（SQLite）与 ``PgStore``（PostgreSQL）都实现这一组方法，所以
+    ``BusinessTools`` / 工具层 / Agent 不关心底层是哪个数据库。
+    """
+
+    def find_orders(self, user_id: str, order_id: str | None = None) -> list[dict]: ...
+
+    def get_order(self, order_id: str) -> dict | None: ...
+
+    def get_order_items(self, order_id: str) -> list[dict]: ...
+
+    def get_logistics(self, order_id: str) -> dict | None: ...
+
+    def get_after_sale(self, order_id: str) -> list[dict]: ...
+
+    def get_refunds(self, order_id: str) -> list[dict]: ...
+
+    def create_return_request(self, order_id: str, reason: str) -> dict: ...
+
+    def create_refund_request(self, order_id: str, amount: float) -> dict: ...
+
+    def create_ticket(self, user_id: str, order_id: str | None, reason: str,
+                      recommended_action: str | None) -> dict: ...
+
+    def counts(self) -> dict[str, int]: ...
+
+
+# 业务表（SQLite 与 PostgreSQL 两侧同名同序，迁移脚本也依赖这个顺序）
+BUSINESS_TABLES = ("users", "products", "orders", "order_items", "logistics",
+                   "after_sale_requests", "refunds", "tickets")
 
 _SEED_USERS = [
     ("U10001", "张三"),
@@ -228,6 +263,10 @@ class Store:
 
     def get_refunds(self, order_id: str) -> list[dict]:
         return self._query("SELECT * FROM refunds WHERE order_id = ?", (order_id,))
+
+    def counts(self) -> dict[str, int]:
+        return {table: len(self._query(f"SELECT 1 FROM {table}"))
+                for table in BUSINESS_TABLES}
 
     # ---- mutations -----------------------------------------------------
     def create_return_request(self, order_id: str, reason: str) -> dict:

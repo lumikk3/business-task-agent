@@ -83,12 +83,22 @@ python scripts/run_async_demo.py
 # 7) 完整版六场景 Demo（确定性 RuleBasedBrain，无需 API Key）
 python scripts/run_demo.py
 
-# 8) 运行测试
+# 8) Step 18：PostgreSQL + Redis（免 root，本机即可）
+pip install -r requirements-db.txt
+scripts/dev_services.sh up
+eval "$(scripts/dev_services.sh env)"
+python scripts/migrate_to_pg.py
+python scripts/run_pg_redis_demo.py
+scripts/dev_services.sh down                  # 用完关掉
+
+# 9) 运行测试
 python -m pytest -q
 ```
 
-> Step 12/17 需要可选依赖：`pip install -r requirements-optional.txt`（mcp、fastapi、uvicorn）。
+> Step 12/17 需要可选依赖：`pip install -r requirements-optional.txt`（mcp、fastapi、uvicorn）；
+> Step 18 需要 `requirements-db.txt`（psycopg、redis）。
 > Agent 核心（agent/tools/rag/memory/store）保持**零第三方依赖**。
+> Step 18/20 的完整步骤与排查见 [DEPLOY.md](DEPLOY.md)。
 
 Demo 输出示例：
 
@@ -293,8 +303,10 @@ create_human_ticket  attempts=1  -> ok
 ## Step 11 → 20：从「能调工具」到「可上线的 Agent 服务」
 
 > 状态说明：11 / 12 / 13 / 14-16 / 17 / 19 都在本机真实跑通过（下面都是实测输出）；
-> **18（Postgres/Redis）和 20（Docker）本机没有服务/Docker，只产出了代码与配置，
-> 未在本机验证**，详见 [DEPLOY.md](DEPLOY.md)。
+> **18（Postgres/Redis）也已在本机验证** —— 用 `scripts/dev_services.sh` 免 root 起了
+> 真实 PostgreSQL 18 + Redis 8，Agent 确实跑在上面；**20（Docker）** 本发行版没开 WSL
+> 集成，需要你点一下开关（Docker Desktop → Settings → Resources → WSL Integration），
+> compose 与 Dockerfile 已就绪。两者详见 [DEPLOY.md](DEPLOY.md)。
 
 ### Step 11：工具权限系统（受控地调用工具）
 
@@ -437,13 +449,45 @@ POST /api/confirm {"session_id":"s9","confirm":true}
     "tools":["query_order","create_refund_request"]}
 ```
 
-### Step 18：PostgreSQL + Redis ⚠️ 未在本机验证
+### Step 18：PostgreSQL + Redis ✅ 已验证
 
-- `app/store_pg.py` —— `PgStore`，与 SQLite 版 `Store` **同方法签名**（`BusinessTools`
-  无需改动），含全部业务表 + `agent_tasks` / `agent_traces` / `eval_cases` / `bad_cases` DDL。
-- `app/memory/redis_store.py` —— `RedisSessionMemory`，与 `SessionMemory` 同接口，
-  多副本共享 Session / Agent Context / Task State。
-- 依赖 `requirements-db.txt`（psycopg / redis，均为惰性导入）。
+一键在**本机免 root**起真实 PostgreSQL 18 + Redis 8（不需要 sudo、不需要 Docker）：
+
+```bash
+pip install -r requirements-db.txt
+scripts/dev_services.sh up                     # 下载/解包 .deb -> initdb -> 启动
+eval "$(scripts/dev_services.sh env)"          # 导出 DATABASE_URL / REDIS_URL
+python scripts/migrate_to_pg.py                # SQLite -> PostgreSQL（19755 行,幂等）
+python scripts/run_pg_redis_demo.py            # 验证 Agent 真的跑在 PG + Redis 上
+```
+
+实测输出（节选）：
+
+```text
+后端选择: business_store=postgres  session_memory=redis
+业务数据层: app.store_pg.PgStore
+
+Agent 工具链 (跑在 PG 上): query_order -> search_after_sales_policy -> create_return_request
+PostgreSQL after_sale_requests: 500 -> 501  (新增 1)
+从 PG 读回的退货单: {"request_id": "R20260927001", "order_id": "O10003", ...}
+同一查询对比: 字段一致: True   关键值一致: True
+
+会话记忆层: app.memory.redis_store.RedisSessionMemory
+context_block:
+  [会话上下文]
+  当前用户: U10003
+  当前订单: O10003(无线耳机)
+  已创建退货申请: R20260927001
+新实例从 Redis 读回同一上下文 ✓
+```
+
+- `app/backend.py` 一处决定后端：设了 `DATABASE_URL` → `PgStore`，设了 `REDIS_URL` →
+  `RedisSessionMemory`，否则保持原来的 SQLite + 进程内记忆（CI 零依赖可跑）。
+- `PgStore` 与 `Store` **同方法签名、同返回形状、同 ID 规则**，所以工具层/Agent 不用改。
+- HTTP 服务同样受益：`curl localhost:8077/health` →
+  `{"business_store":"postgres","session_memory":"redis"}`。
+- 集成测试 `tests/test_pg_redis_integration.py`：服务在跑就跑真的，没跑自动 skip。
+- 三种路线（免 root 脚本 / apt + sudo / Docker 容器）与排查表见 **[DEPLOY.md](DEPLOY.md)**。
 
 ### Step 19：并发执行
 
@@ -462,15 +506,28 @@ python scripts/run_async_demo.py
 `parallel_tools=True` 后，同一轮里多个「自动放行」的工具调用会并发执行，结果仍按原顺序
 回灌（有 confirm/human 的批次自动退回串行）。
 
-### Step 20：Docker ⚠️ 未在本机验证
+### Step 20：Docker ⚠️ 待开一个开关
 
 `docker-compose.yml`：`agent-api` + `postgres` + `redis` + `mcp-order` +
 `mcp-logistics` + `mcp-aftersale`（+ 由 API 直接托管的极简前端）。配
 `docker/Dockerfile.api`、`docker/Dockerfile.mcp`、`docker/postgres/init.sql`。
 
+本机 Docker Desktop 装在 Windows 侧，但这个 WSL 发行版**没开集成**，所以 WSL 里
+`docker` 用不了。开启后即可：
+
 ```bash
-docker compose up --build      # 目标形态;本机(WSL2)无 docker,未验证
+# Windows: Docker Desktop -> Settings -> Resources -> WSL Integration
+#          -> 打开 “Enable integration with my default WSL distro”
+#          -> 在列表里勾选本发行版 -> Apply & Restart -> 重开 WSL 终端
+docker version --format '{{.Server.Version}}'    # 能打印版本号就 OK
+cp .env.example .env                             # 填 GLM_API_KEY（可选）
+docker compose up --build
+open http://localhost:8077/
 ```
+
+容器里 `agent-api` 设置了 `DATABASE_URL` / `REDIS_URL`，配合 `app/backend.py`
+工厂，容器里真的在用 Postgres + Redis。逐项验证、排查表、以及「不想装 Docker
+的替代跑法」见 **[DEPLOY.md](DEPLOY.md) §2**。
 
 ---
 
@@ -553,7 +610,8 @@ business-task-agent/
 │   │   ├── bridge.py             # Step 12：MCP Client 桥接 -> ToolRegistry
 │   │   └── servers/              # order / logistics / aftersale 三台 MCP Server
 │   ├── store.py                  # SQLite 数据层（种子 / 生成库 / 临时副本）
-│   └── store_pg.py               # Step 18：PostgreSQL 版（未在本机验证）
+│   ├── store_pg.py               # Step 18：PostgreSQL 版（与 Store 同接口）
+│   └── backend.py                # Step 18：按 DATABASE_URL/REDIS_URL 选后端
 ├── data/
 │   ├── business.db               # 生成的"假企业业务系统"（SQLite）
 │   └── policies/*.md             # 售后知识库（66 份规则文档）
@@ -569,13 +627,17 @@ business-task-agent/
 │   ├── run_mcp_agent.py          # Step 12：Agent -> MCP -> DB
 │   ├── run_trace_demo.py         # Step 13：Trace 树
 │   ├── run_async_demo.py         # Step 19：串行 vs 并发
+│   ├── dev_services.sh           # Step 18：免 root 起真实 PostgreSQL + Redis
+│   ├── migrate_to_pg.py          # Step 18：SQLite -> PostgreSQL（幂等）
+│   ├── run_pg_redis_demo.py      # Step 18：验证 Agent 跑在 PG + Redis 上
 │   └── run_demo.py               # 完整版六场景 Demo 入口
-├── tests/                        # 94 个测试
-├── docker/                       # Step 20：Dockerfile + postgres/init.sql（未验证）
-├── docker-compose.yml            # Step 20：一键起（未验证）
+├── tests/                        # 97 个测试（+3 个 PG/Redis 集成测试,无服务时 skip）
+├── docker/                       # Step 20：Dockerfile + postgres/init.sql
+├── docker-compose.yml            # Step 20：一键起
 ├── requirements-optional.txt     # mcp / fastapi / uvicorn
-├── requirements-db.txt           # psycopg / redis（未验证）
-└── DEPLOY.md                     # 部署说明 + 本机验证状态
+├── requirements-db.txt           # psycopg / redis
+├── .env.example                  # 环境变量模板
+└── DEPLOY.md                     # Step 18/20 保姆级操作手册
 ```
 
 ---
@@ -723,7 +785,7 @@ backoff_base, backoff_max)`、`PermissionPolicy(auto_max, confirm_max)`）均可
 ## 测试
 
 ```bash
-python -m pytest -q          # 94 passed
+python -m pytest -q          # 97 passed（起了 PG/Redis 则额外 3 个集成测试也跑）
 ```
 
 覆盖范围（`tests/`）：
@@ -739,6 +801,7 @@ python -m pytest -q          # 94 passed
 | `test_mcp_bridge.py` | 真实拉起 3 台 MCP Server、工具发现、入参 schema 正确、stdio 往返调用（无 mcp 包时 skip） |
 | `test_eval_harness.py` | 数据集规模/确定性、真实评测指标、Bad Case 分类、Regression pass→fail 检测 |
 | `test_deploy_artifacts.py` | DDL 与 init.sql 表名一致、PgStore 与 Store 同接口、无依赖也能 import、compose/Dockerfile/requirements 齐备 |
+| `test_pg_redis_integration.py` | **真实** PostgreSQL/Redis：PgStore 与 Store 结果一致、Agent 写穿到 PG、Redis 会话跨实例可读（服务未起时自动 skip） |
 | `test_intents.py` | 七类意图识别与优先级 |
 | `test_llm_brain.py` | LLM Brain 解析 tool_calls / 最终回答（本地 fake server，无网络） |
 | `test_policy_rag.py` | query rewrite、检索与 rerank、政策命中 |
@@ -767,9 +830,9 @@ python -m pytest -q          # 94 passed
 - **Step 15** ✅ Bad Case：自动归类 + 根因提示
 - **Step 16** ✅ Regression：pass→fail 逐条对比
 - **Step 17** ✅ FastAPI：`/api/chat` 等 6 个端点 + 工作台
-- **Step 18** ⚠️ PostgreSQL + Redis：代码与 DDL 已备，**本机无服务，未验证**
+- **Step 18** ✅ PostgreSQL + Redis：`PgStore` / `RedisSessionMemory` + 免 root 起真实服务的脚本，**已在本机验证**
 - **Step 19** ✅ 异步：并发执行独立工具调用（2.96x）
-- **Step 20** ⚠️ Docker：compose 与 Dockerfile 已备，**本机无 docker，未验证**
+- **Step 20** ⚠️ Docker：compose 与 Dockerfile 已备，待开启 Docker Desktop 的 WSL 集成
 - **V1（已完成）** Python / OpenAI 兼容 LLM API / SQLite / 简单 Tool Calling / RAG
 - **V2** FastAPI / PostgreSQL / Redis / Agent Runtime / Trace
 - **V3** MCP / Permission / Human-in-the-loop / Retry / Fallback

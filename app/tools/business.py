@@ -152,3 +152,18 @@ def build_registry(tools: BusinessTools) -> ToolRegistry:
         risk_level=RiskLevel.LOW,
     ))
     return registry
+
+
+# ---- 最小版（Step 4）：第一版只暴露三个工具 -----------------------------
+# 对应 DESIGN/课程里的第四阶段：先让三个问题跑通，不引入 Planner 和权限门。
+MINIMAL_TOOLS = ("query_order", "query_logistics", "search_after_sales_policy")
+
+
+def build_minimal_registry(tools: BusinessTools,
+                           names: tuple[str, ...] = MINIMAL_TOOLS) -> ToolRegistry:
+    """只注册 ``names`` 里列出的工具，供最小版 Agent 使用。"""
+    full = build_registry(tools)
+    registry = ToolRegistry()
+    for name in names:
+        registry.register(full.get(name))
+    return registry

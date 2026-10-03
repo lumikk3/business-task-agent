@@ -125,7 +125,15 @@ class ToolExecutor:
 
     def execute(self, name: str, arguments: dict | None = None) -> ToolResult:
         arguments = arguments or {}
-        spec = self.registry.get(name)
+        try:
+            spec = self.registry.get(name)
+        except ToolError as exc:
+            # 未知工具（例如 LLM 幻觉出的名字）——不抛异常，作为失败结果回灌，
+            # 让 Agent 有机会改用其它工具或直接回答。
+            return ToolResult(
+                tool=name, ok=False, error=str(exc), error_type=exc.error_type,
+                attempts=1, latency_ms=0.0,
+            )
         start = time.monotonic()
         attempts = 0
         while True:

@@ -10,10 +10,15 @@ import os
 import sqlite3
 import threading
 from datetime import date
+from pathlib import Path
 
 # Fixed "today" for the demo so policy checks (7-day / 15-day windows) are
 # deterministic in tests and demos. Override with AGENT_DEMO_TODAY=YYYY-MM-DD.
 DEMO_TODAY = date(2026, 9, 27)
+
+# Default location of the generated "fake enterprise business system"
+# (built by scripts/generate_data.py). Override with AGENT_DB_PATH.
+DEFAULT_DB_PATH = Path(__file__).resolve().parents[1] / "data" / "business.db"
 
 
 def demo_today() -> date:
@@ -86,6 +91,9 @@ CREATE TABLE IF NOT EXISTS tickets (
 );
 """
 
+# Public alias so the data generator can create the same tables in a fresh DB.
+SCHEMA = _SCHEMA
+
 _SEED_USERS = [
     ("U10001", "张三"),
     ("U10002", "李四"),
@@ -136,17 +144,25 @@ _SEED_REFUNDS = [
 
 
 class Store:
-    """Thread-safe SQLite store (in-memory by default, file path optional)."""
+    """Thread-safe SQLite store (in-memory by default, file path optional).
 
-    def __init__(self, path: str = ":memory:"):
+    ``seed=True`` loads the small hand-written demo rows (2 users / 5 orders)
+    used by the unit tests and the six-scenario demo. ``seed=False`` creates an
+    empty schema only — that is how the generated business DB is opened.
+    """
+
+    def __init__(self, path: str = ":memory:", seed: bool = True):
         self._conn = sqlite3.connect(path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._lock = threading.Lock()
-        self._init()
+        self._init(seed)
 
-    def _init(self) -> None:
+    def _init(self, seed: bool = True) -> None:
         with self._lock:
             self._conn.executescript(_SCHEMA)
+            if not seed:
+                self._conn.commit()
+                return
             self._conn.executemany("INSERT OR IGNORE INTO users VALUES (?, ?)", _SEED_USERS)
             self._conn.executemany(
                 "INSERT OR IGNORE INTO products VALUES (?, ?, ?, ?)", _SEED_PRODUCTS
@@ -264,3 +280,13 @@ def reset_store() -> Store:
     with _default_lock:
         _default_store = Store()
         return _default_store
+
+
+def open_store(path: str | None = None, seed: bool = False) -> Store:
+    """Open the generated business DB (the "fake enterprise system").
+
+    Path resolution: explicit argument > ``AGENT_DB_PATH`` env var >
+    ``data/business.db``. Build it first with ``scripts/generate_data.py``.
+    """
+    resolved = path or os.environ.get("AGENT_DB_PATH") or str(DEFAULT_DB_PATH)
+    return Store(resolved, seed=seed)

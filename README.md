@@ -13,6 +13,8 @@
 
 - [核心能力](#核心能力)
 - [快速开始](#快速开始)
+- [业务数据（假的企业业务系统）](#业务数据假的企业业务系统)
+- [最小版 Agent（Step 3 / Step 4）](#最小版-agentstep-3--step-4)
 - [六个核心场景](#六个核心场景)
 - [执行流程 / Agent Loop](#执行流程--agent-loop)
 - [目录结构](#目录结构)
@@ -53,10 +55,16 @@
 要求：Python 3.10+（开发环境使用 3.14）。
 
 ```bash
-# 1) 运行六个核心场景 Demo（默认使用确定性 RuleBasedBrain，无需任何 API Key）
+# 1) 准备业务数据 —— 生成"假的企业业务系统"（1000 users / 5000 orders / …）
+python scripts/generate_data.py --stats
+
+# 2) 最小版 Agent（Step 3/4）：3 个工具 + 3 个问题，需要 GLM_API_KEY
+python scripts/run_minimal_agent.py
+
+# 3) 完整版六场景 Demo（默认确定性 RuleBasedBrain，无需任何 API Key）
 python scripts/run_demo.py
 
-# 2) 运行测试
+# 4) 运行测试
 python -m pytest -q
 ```
 
@@ -86,6 +94,103 @@ python scripts/run_demo.py
 ```
 
 未配置 Key 时自动回退到确定性 Brain，Demo 与测试始终可离线复现。
+
+---
+
+## 业务数据（假的企业业务系统）
+
+不接任何真实淘宝 / 京东接口 —— 第一版自己造数据，写进一个 SQLite 库
+（`data/business.db`）。Agent 的 Tool 就是在操作这个系统。
+
+```bash
+python scripts/generate_data.py --stats        # 生成 + 打印分布
+python scripts/generate_data.py --seed 1       # 换种子，得到另一份数据
+```
+
+规模（`app/data/generator.py`，确定性生成，同 seed 必得同一份数据）：
+
+| 表 | 行数 |
+| --- | --- |
+| `users` | 1000 |
+| `products` | 3000 |
+| `orders` | 5000 |
+| `order_items` | 5000 |
+| `logistics` | 5000 |
+| `after_sale_requests` | 500 |
+| `refunds` | ~255 |
+
+数据是**自洽**的：每张订单都关联真实存在的 user / product，每张订单恰好一条
+logistics（状态与订单一致），after_sale 只挂在已签收订单上，一部分带 refunds。
+
+> 你给的示例 JSON（`order_id / user_id / product_id / status / amount`，
+> `order_id / status / company / tracking_no`）在内部落成规范化的表：
+> 商品经 `order_items` 关联、金额字段为 `total`、承运商字段为 `carrier`，
+> 这样 `query_order` 一次就能带出商品、物流概要、售后与退款记录。
+
+固定 3 个演示用户，保证展示问题稳定命中：
+
+| 用户 | 订单状态 | 对应问题 |
+| --- | --- | --- |
+| `U10001` 张三 | 已付款待发货 | 我的订单什么时候发货？ |
+| `U10002` 李四 | 已发货、物流运输中 | 我的快递到哪里了？ |
+| `U10003` 王五 | 已签收 2 天的耳机 | 这个耳机能退吗？ |
+
+（这三个用户各自只有这一张订单，随机订单使用 `U10004` 起的用户，互不干扰。）
+
+---
+
+## 最小版 Agent（Step 3 / Step 4）
+
+设计里的那张图，就是一个完整实现 —— **没有 Planner**：
+
+```text
+User  →  LLM  →  Tool  →  Tool Result  →  LLM  →  Answer
+```
+
+```bash
+python scripts/run_minimal_agent.py
+```
+
+* 只暴露 3 个工具：`query_order` / `query_logistics` / `search_after_sales_policy`
+  （`app/tools/business.py::build_minimal_registry`）。
+* LLM 由 function calling 自主决定调哪个工具；工具结果以标准 `role: tool` 消息回灌，
+  直到模型给出最终回答（`app/agent/minimal_agent.py`）。
+* 无执行计划、无权限门、无人工接管 —— 这些在完整版 `AgentRuntime` 里，最小版刻意省略。
+
+**接入 GLM**（OpenAI 兼容，沿用最熟悉的方式）：
+
+```bash
+export GLM_API_KEY=...                                   # 或写进 ~/.hermes/.env
+export GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4 # 默认值
+export GLM_MODEL=glm-4-flash                             # 可选 glm-4.6 / glm-4-plus
+```
+
+实测输出（真实调用 `glm-4-flash`）：
+
+```text
+[llm] model=glm-4-flash base_url=https://open.bigmodel.cn/api/paas/v4
+[tools] query_order, query_logistics, search_after_sales_policy
+
+=== 问题1｜U10001｜我的订单什么时候发货? ===
+  step1  tool  query_order({'user_id': 'U10001'})  -> ok
+  状态   : completed   轮次: 2
+  回答   : 您的订单O10001已经支付，但尚未发货…
+
+=== 问题2｜U10002｜我的快递到哪里了? ===
+  step1  tool  query_order({'user_id': 'U10002'})        -> ok
+  step2  tool  query_logistics({'order_id': 'O10002'})   -> ok
+  状态   : completed   轮次: 3
+  回答   : 您的快递正在运输中，目前位于武汉洪山转运中心…
+
+=== 问题3｜U10003｜这个耳机能退吗? ===
+  step1  tool  query_order({'user_id': 'U10003'})                        -> ok
+  step2  tool  search_after_sales_policy({'query': '耳机退货政策'})       -> ok
+  状态   : completed   轮次: 3
+  回答   : 根据查询到的信息，您购买的无线耳机支持7天无理由退货…
+```
+
+这一步跑通之后，就有了第一个可以展示的 Agent。完整版（Planner + 6 工具 + 权限 +
+人工接管 + Trace）仍然保留在 `app/agent/runtime.py`，两者共用同一套工具层与数据层。
 
 ---
 
@@ -143,18 +248,26 @@ business-task-agent/
 │   │   ├── planner.py            # 任务规划（意图 → 执行步骤）
 │   │   ├── brain.py              # RuleBasedBrain：确定性决策
 │   │   ├── llm_brain.py          # OpenAIBrain：LLM function calling 决策
+│   │   ├── llm_client.py         # OpenAI 兼容 Chat 客户端（GLM 接入）
+│   │   ├── minimal_agent.py      # 最小版 Agent：无 Planner 的 LLM↔Tool 循环
 │   │   ├── permissions.py        # 权限分级（金额阈值 + 风险等级）
 │   │   └── runtime.py            # AgentRuntime：执行主循环 + 人工接管
 │   ├── tools/
 │   │   ├── registry.py           # ToolRegistry + ToolExecutor（超时/重试/退避/分类）
-│   │   └── business.py           # 6 个业务工具 + build_registry()
+│   │   └── business.py           # 6 个业务工具 + 最小版 3 工具注册表
+│   ├── data/generator.py         # 业务数据生成器（1000/3000/5000/5000/500）
 │   ├── rag/policy_rag.py         # 售后政策 RAG（rewrite → 打分 → rerank）
 │   ├── memory/context.py         # TaskContext + MemoryStore（会话级记忆）
 │   ├── trace/tracer.py           # Tracer / Span（JSONL 落盘）
-│   └── store.py                  # SQLite 数据层（内存库 + 种子数据）
-├── data/policies/*.md            # 售后政策知识库（8 个规则文档）
-├── scripts/run_demo.py           # 六个场景 Demo 入口
-├── tests/                        # 40 个测试
+│   └── store.py                  # SQLite 数据层（种子数据 / 打开生成的业务库）
+├── data/
+│   ├── business.db               # 生成的"假企业业务系统"（SQLite）
+│   └── policies/*.md             # 售后政策知识库（8 个规则文档）
+├── scripts/
+│   ├── generate_data.py          # 生成业务数据
+│   ├── run_minimal_agent.py      # 最小版 Agent：3 工具 + 3 问题
+│   └── run_demo.py               # 完整版六场景 Demo 入口
+├── tests/                        # 49 个测试
 ├── eval/                         # 评测数据集 / 评测器 / 报告（预留）
 └── docker/                       # 容器化（预留）
 ```
@@ -282,9 +395,12 @@ error / retry_count`，供后续 Eval 引擎与 Bad Case 分析回放整条执�
 
 | 环境变量 | 作用 | 默认 |
 | --- | --- | --- |
-| `OPENAI_API_KEY` | 设置后 `run_demo.py` 使用 `OpenAIBrain` | 未设置（用 RuleBasedBrain） |
-| `OPENAI_BASE_URL` | OpenAI 兼容端点 | `https://api.openai.com/v1` |
-| `OPENAI_MODEL` | 模型名 | `gpt-4o-mini` |
+| `GLM_API_KEY` | 最小版 Agent 调 GLM 的密钥（优先） | 未设置 |
+| `GLM_BASE_URL` | GLM 端点 | `https://open.bigmodel.cn/api/paas/v4` |
+| `GLM_MODEL` | GLM 模型名 | `glm-4-flash`（另有 glm-4.6 / glm-4-plus / glm-4-air …） |
+| `OPENAI_API_KEY` | 回退密钥；设置后 `run_demo.py` 使用 `OpenAIBrain` | 未设置 |
+| `OPENAI_BASE_URL` / `OPENAI_MODEL` | 回退端点 / 模型 | `https://api.openai.com/v1` / `gpt-4o-mini` |
+| `AGENT_DB_PATH` | 业务库路径（`open_store()`） | `data/business.db` |
 | `AGENT_DEMO_TODAY` | 覆盖 Demo 的「今天」（`YYYY-MM-DD`），影响时效判断 | `2026-09-27` |
 
 运行时参数（如 `AgentRuntime(max_steps=8)`、`ToolExecutor(max_retries, timeout_s,
@@ -296,7 +412,7 @@ backoff_base, backoff_max)`、`PermissionPolicy(auto_max, confirm_max)`）均可
 ## 测试
 
 ```bash
-python -m pytest -q          # 40 passed
+python -m pytest -q          # 49 passed
 ```
 
 覆盖范围（`tests/`）：
@@ -304,6 +420,8 @@ python -m pytest -q          # 40 passed
 | 文件 | 覆盖 |
 | --- | --- |
 | `test_agent_runtime.py` | 六个场景端到端、多轮记忆、权限分级、二次确认后 resume、工具失败 Fallback、Trace 链路完整性 |
+| `test_minimal_agent.py` | 最小版 3 工具、无 Planner 的 LLM↔Tool 循环、工具结果回灌、未知工具容错、最大步数（本地 fake server，无网络） |
+| `test_data_generator.py` | 精确规模（1000/3000/5000/5000/500）、确定性、引用完整性、演示用户、重复生成不累加 |
 | `test_intents.py` | 七类意图识别与优先级 |
 | `test_llm_brain.py` | LLM Brain 解析 tool_calls / 最终回答（本地 fake server，无网络） |
 | `test_policy_rag.py` | query rewrite、检索与 rerank、政策命中 |
@@ -314,8 +432,11 @@ python -m pytest -q          # 40 passed
 
 ## 路线图
 
-按 DESIGN.md 第 9 节分阶段演进，当前 V1 已完成：
+按 DESIGN.md 第 9 节分阶段演进，当前 V1 已完成。构建路径（也是本仓库的分阶段交付）：
 
+- **数据准备** ✅ 自己造"假的企业业务系统"（不接真实淘宝/京东）
+- **Step 3** ✅ 接入 GLM，最小 Agent 循环（无 Planner）
+- **Step 4** ✅ 只做三个工具，跑通三个展示问题
 - **V1（已完成）** Python / OpenAI 兼容 LLM API / SQLite / 简单 Tool Calling / RAG
 - **V2** FastAPI / PostgreSQL / Redis / Agent Runtime / Trace
 - **V3** MCP / Permission / Human-in-the-loop / Retry / Fallback

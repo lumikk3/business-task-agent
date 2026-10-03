@@ -154,9 +154,11 @@ def build_registry(tools: BusinessTools) -> ToolRegistry:
     return registry
 
 
-# ---- 最小版（Step 4）：第一版只暴露三个工具 -----------------------------
-# 对应 DESIGN/课程里的第四阶段：先让三个问题跑通，不引入 Planner 和权限门。
+# ---- 最小版（Step 4 / Step 5）------------------------------------------
+# Step 4：先让三个只读问题跑通。Step 5：加入 create_return_request，让 Agent
+# 真正「完成」退货任务，而不只是回答。
 MINIMAL_TOOLS = ("query_order", "query_logistics", "search_after_sales_policy")
+RETURN_TOOLS = MINIMAL_TOOLS + ("create_return_request",)
 
 
 def build_minimal_registry(tools: BusinessTools,

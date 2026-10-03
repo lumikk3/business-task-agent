@@ -188,7 +188,10 @@ def build_dataset(seed: int = DEFAULT_SEED, today: date = DEMO_TODAY) -> dict:
         add_logistics(oid, status, date.fromisoformat(delivered_at) if delivered_at else None)
 
     # ---- after-sale：只挂在 delivered 订单上 --------------------------
-    delivered_orders = [o for o in orders if o[2] == "delivered"]
+    # 演示订单(O10001~O10003)不参与采样,保证三个展示场景从「干净」状态开始。
+    demo_order_ids = {o[0] for o in orders[:len(DEMO_USERS)]}
+    delivered_orders = [o for o in orders
+                        if o[2] == "delivered" and o[0] not in demo_order_ids]
     chosen = rng.sample(delivered_orders, min(AFTER_SALES, len(delivered_orders)))
     after_sale: list[tuple] = []
     refunds: list[tuple] = []

@@ -7,7 +7,9 @@ real PostgreSQL DAO in V2 without touching the tool layer.
 from __future__ import annotations
 
 import os
+import shutil
 import sqlite3
+import tempfile
 import threading
 from datetime import date
 from pathlib import Path
@@ -290,3 +292,16 @@ def open_store(path: str | None = None, seed: bool = False) -> Store:
     """
     resolved = path or os.environ.get("AGENT_DB_PATH") or str(DEFAULT_DB_PATH)
     return Store(resolved, seed=seed)
+
+
+def open_scratch_store(path: str | None = None, seed: bool = False) -> Store:
+    """在生成业务库的**临时副本**上操作。
+
+    demo / 脚本会创建退货申请、工单等写操作；直接用 open_store() 会写脏被提交的
+    ``data/business.db``，使重复运行结果不一致。这里复制一份到临时目录再打开，
+    保证每次运行都从同一份干净数据开始。
+    """
+    source = path or os.environ.get("AGENT_DB_PATH") or str(DEFAULT_DB_PATH)
+    scratch = Path(tempfile.mkdtemp(prefix="agent-db-")) / "business.db"
+    shutil.copyfile(source, scratch)
+    return Store(str(scratch), seed=seed)

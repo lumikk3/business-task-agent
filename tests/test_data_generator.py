@@ -86,6 +86,9 @@ def test_demo_users_are_clean_and_answer_the_three_questions(tmp_path):
         orders = tools.query_order(uid)["orders"]
         assert len(orders) == 1, f"{uid} 应只有一张演示订单"
         assert orders[0]["status"] == status
+        # 演示订单必须干净：不能预置历史售后/退款,否则展示场景会串味
+        assert orders[0]["after_sale_requests"] == []
+        assert orders[0]["refunds"] == []
 
     # U10002 的订单有在途物流
     logistics = tools.query_logistics("O10002")

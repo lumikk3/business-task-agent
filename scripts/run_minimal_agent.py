@@ -20,16 +20,17 @@ sys.path.insert(0, str(ROOT))
 from app.agent.llm_client import ChatClient, has_llm_credentials, resolve_llm_config  # noqa: E402
 from app.agent.minimal_agent import MinimalAgent  # noqa: E402
 from app.data.generator import DEFAULT_DB_PATH, generate  # noqa: E402
-from app.store import open_store  # noqa: E402
-from app.tools.business import MINIMAL_TOOLS, BusinessTools, build_minimal_registry  # noqa: E402
+from app.store import open_scratch_store  # noqa: E402
+from app.tools.business import RETURN_TOOLS, BusinessTools, build_minimal_registry  # noqa: E402
 from app.rag.policy_rag import PolicyRAG  # noqa: E402
 from app.tools.registry import ToolExecutor  # noqa: E402
 
-# 三个问题 -> 对应演示用户（见 app/data/generator.py::DEMO_USERS）
+# Step 4 的三个问题 + Step 5 的退货任务（U10003 有一张已签收 2 天的耳机订单）
 QUESTIONS = [
     ("U10001", "我的订单什么时候发货?"),
     ("U10002", "我的快递到哪里了?"),
     ("U10003", "这个耳机能退吗?"),
+    ("U10003", "我的耳机坏了,我想退货。"),
 ]
 
 
@@ -37,9 +38,9 @@ def build_agent(db_path: str, model: str | None = None) -> MinimalAgent:
     if not Path(db_path).exists():
         print(f"[data] {db_path} 不存在，自动生成业务数据 …")
         generate(db_path)
-    store = open_store(db_path)
+    store = open_scratch_store(db_path)
     tools = BusinessTools(store, policy_search=PolicyRAG().retrieve)
-    registry = build_minimal_registry(tools)
+    registry = build_minimal_registry(tools, RETURN_TOOLS)
     executor = ToolExecutor(registry, max_retries=2, timeout_s=5.0)
     config = resolve_llm_config(model=model)
     print(f"[llm] model={config.model} base_url={config.base_url}")

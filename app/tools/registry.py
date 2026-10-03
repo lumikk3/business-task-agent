@@ -103,6 +103,9 @@ class ToolRegistry:
     def names(self) -> list[str]:
         return list(self._tools)
 
+    def specs(self) -> list[ToolSpec]:
+        return list(self._tools.values())
+
     def schemas(self) -> list[dict]:
         return [spec.openai_schema() for spec in self._tools.values()]
 

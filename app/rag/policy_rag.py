@@ -1,52 +1,46 @@
-"""Policy RAG (DESIGN.md 5.5).
+"""售后政策 RAG（DESIGN.md 5.5）。
 
-Pipeline: query rewrite -> retrieval -> rerank -> policy context.
+流水线：
 
-V1 uses deterministic keyword scoring over `data/policies/*.md` (CJK bigrams +
-latin words) instead of embeddings. The `retrieve()` interface is the swap
-point for vector search + rerank models in V2.
+    Query Rewrite -> Embedding -> Vector Search -> Rerank -> Policy Context
+
+* **Query Rewrite**：去停用词，保留内容关键词（``app/rag/tokenize.py``）。
+* **Embedding**：``app/rag/embeddings.py``（GLM 远程 / 离线确定性两实现）。
+* **Vector Search**：``app/rag/vector_store.py`` 的余弦索引。
+* **Rerank**：把向量相似度与「词面命中（标题/章节加权）」融合，稀有词权重更高。
+
+embedder 采用依赖注入：不传就用离线实现，测试与无 key 环境保持确定性；
+需要真·语义检索时由调用方注入 ``GLMEmbedder``（见 ``resolve_embedder``）。
 """
 from __future__ import annotations
 
 import math
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from app.rag.embeddings import Embedder, HashingEmbedder
+from app.rag.tokenize import rewrite as rewrite_query
+from app.rag.tokenize import tokens
+from app.rag.vector_store import VectorIndex
+
 _DEFAULT_POLICY_DIR = Path(__file__).resolve().parents[2] / "data" / "policies"
 
-_STOPWORDS = set(
-    "的 了 吗 呢 吧 啊 呀 我 你 您 他 她 它 们 是 在 有 和 与 或 能 可以 还 也 就 都 "
-    "要 会 想 请 问 个 么 什么 怎么 如何 这 那 一下 帮我 退货 退款".split()
-)
-
-# Applied inside a CJK run (a whole sentence is one run), so multi-char entries
-# are stripped first, longest first, then single-char entries.
-_MULTI_STOPWORDS = tuple(sorted((w for w in _STOPWORDS if len(w) > 1),
-                                key=len, reverse=True))
-_SINGLE_STOPWORDS = frozenset(w for w in _STOPWORDS if len(w) == 1)
-
-# A token present in more than this fraction of chunks carries almost no signal
-# (a corpus-level stopword) and is down-weighted by the reranker.
-_DF_COMMON_FRACTION = 0.25
+# 存在于超过这个比例 chunk 里的 token 几乎没有区分度（语料级停用词），降权。
+# 0.15 而非更大值：像「无理由退货」拆出的 无理/理由/由退、以及「运费/退货/退款」
+# 这类高频 bigram 出现在 ~20-50% 的 chunk 里，只有压下去，稀有词（食品 8%、
+# 耳机 8%）才不会被它们的重复计分淹没。
+_DF_COMMON_FRACTION = 0.15
 _COMMON_TOKEN_WEIGHT = 0.3
 
-
-def _tokens(text: str) -> set[str]:
-    """CJK bigrams + latin/number words — a poor man's tokenizer, deterministic."""
-    result: set[str] = set()
-    for run in re.findall(r"[\u4e00-\u9fff]+", text):
-        if len(run) == 1:
-            result.add(run)
-        result.update(run[i:i + 2] for i in range(len(run) - 1))
-    result.update(re.findall(r"[a-zA-Z0-9]+", text.lower()))
-    return result
+# Rerank 融合权重：向量相似度 + 词面命中分。
+_VECTOR_WEIGHT = 8.0
+_TITLE_BOOST = 1.5
 
 
 @dataclass
 class PolicyChunk:
-    policy: str      # file stem, e.g. "7天无理由退货规则"
-    section: str     # "##" heading or ""
+    policy: str      # 文件名 stem, e.g. "7天无理由退货规则"
+    section: str     # "##" 标题，或 ""
     text: str
 
     def to_dict(self) -> dict:
@@ -54,81 +48,101 @@ class PolicyChunk:
 
 
 class PolicyRAG:
-    def __init__(self, policy_dir: Path | str | None = None):
+    def __init__(self, policy_dir: Path | str | None = None,
+                 embedder: Embedder | None = None):
         self.policy_dir = Path(policy_dir) if policy_dir else _DEFAULT_POLICY_DIR
+        self.embedder: Embedder = embedder or HashingEmbedder()
         self.chunks: list[PolicyChunk] = []
         self.load()
 
+    # ---- loading / index ----------------------------------------------
     def load(self) -> None:
         self.chunks = []
         for path in sorted(self.policy_dir.glob("*.md")):
             policy = path.stem
             section, buffer = "", []
+
+            def flush() -> None:
+                text = "\n".join(buffer).strip()
+                if text:                       # 只有标题、没有正文的区块不产出 chunk
+                    self.chunks.append(PolicyChunk(policy, section, text))
+
             for line in path.read_text(encoding="utf-8").splitlines():
                 if line.startswith("## "):
-                    if buffer:
-                        self.chunks.append(PolicyChunk(policy, section, "\n".join(buffer).strip()))
-                        buffer = []
+                    flush()
+                    buffer = []
                     section = line[3:].strip()
+                elif line.startswith("# "):
+                    continue                   # H1 是文档标题,已由 policy 字段承载
                 else:
                     buffer.append(line)
-            if buffer:
-                self.chunks.append(PolicyChunk(policy, section, "\n".join(buffer).strip()))
+            flush()
         self._build_index()
 
     def _build_index(self) -> None:
-        """Precompute per-chunk tokens and document frequency for the reranker."""
+        # 词面：每 chunk 的 token 集合 + 文档频率（供 rerank 用）
         self._chunk_tokens = [
-            _tokens(chunk.policy + " " + chunk.section + " " + chunk.text)
+            tokens(chunk.policy + " " + chunk.section + " " + chunk.text)
             for chunk in self.chunks
         ]
         df: dict[str, int] = {}
-        for tokens in self._chunk_tokens:
-            for token in tokens:
+        for chunk_tokens in self._chunk_tokens:
+            for token in chunk_tokens:
                 df[token] = df.get(token, 0) + 1
         self._df = df
 
-    def rewrite(self, query: str) -> str:
-        """Query rewrite: drop stopwords/punctuation, keep content keywords.
+        # 向量：一次批量为所有 chunk 编码
+        texts = [f"{c.policy} {c.section} {c.text}" for c in self.chunks]
+        self._index = VectorIndex()
+        for i, vector in enumerate(self.embedder.embed(texts)):
+            self._index.add(i, vector)
 
-        A CJK sentence arrives as a single run, so stopwords are stripped as
-        substrings rather than matched against the whole run.
-        """
-        parts: list[str] = []
-        for run in re.findall(r"[\u4e00-\u9fff]+|[a-zA-Z0-9]+", query):
-            if not run[0].isascii():                   # CJK run — strip stopwords
-                for word in _MULTI_STOPWORDS:
-                    run = run.replace(word, "")
-                run = "".join(ch for ch in run if ch not in _SINGLE_STOPWORDS)
-            if run:
-                parts.append(run)
-        return " ".join(parts) or query
+    @property
+    def chunk_count(self) -> int:
+        return len(self.chunks)
+
+    @property
+    def doc_count(self) -> int:
+        return len({chunk.policy for chunk in self.chunks})
+
+    # ---- query ---------------------------------------------------------
+    def rewrite(self, query: str) -> str:
+        return rewrite_query(query)
 
     def retrieve(self, query: str, k: int = 3) -> list[dict]:
         rewritten = self.rewrite(query)
-        query_tokens = _tokens(rewritten)
+        query_tokens = tokens(rewritten)
         if not query_tokens:
             return []
+
         n = max(len(self.chunks), 1)
         common_cutoff = max(2, int(n * _DF_COMMON_FRACTION))
 
         def weight(token: str) -> float:
             freq = self._df.get(token, 1)
-            base = math.log(1 + n / freq)          # rarer terms score higher
-            if freq > common_cutoff:               # corpus stopword — low signal
+            base = math.log(1 + n / freq)          # 越稀有权重越高
+            if freq > common_cutoff:
                 base *= _COMMON_TOKEN_WEIGHT
             return base
 
+        # Vector Search：先取一批候选，再融合词面分做 Rerank。
+        candidate_k = min(len(self.chunks), max(k * 5, 15))
+        query_vector = self.embedder.embed([rewritten])[0]
+        candidates = self._index.search(query_vector, candidate_k)
+
         scored: list[tuple[float, PolicyChunk]] = []
-        for chunk, chunk_tokens in zip(self.chunks, self._chunk_tokens):
+        for item_id, cosine in candidates:
+            chunk = self.chunks[item_id]
+            chunk_tokens = self._chunk_tokens[item_id]
             overlap = query_tokens & chunk_tokens
-            if not overlap:
+            if not overlap and cosine <= 0:
                 continue
-            # rerank: title/section matches weigh more than body matches
-            title_tokens = _tokens(chunk.policy + " " + chunk.section)
-            score = (sum(weight(t) for t in overlap)
-                     + 1.5 * sum(weight(t) for t in query_tokens & title_tokens))
+            title_tokens = tokens(chunk.policy + " " + chunk.section)
+            lexical = (sum(weight(t) for t in overlap)
+                       + _TITLE_BOOST * sum(weight(t) for t in query_tokens & title_tokens))
+            score = _VECTOR_WEIGHT * cosine + lexical
             scored.append((score, chunk))
+
         scored.sort(key=lambda item: (-item[0], item[1].policy, item[1].section))
         return [{**chunk.to_dict(), "score": round(score, 2)}
                 for score, chunk in scored[:k]]

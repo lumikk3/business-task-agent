@@ -23,7 +23,10 @@ import urllib.request
 from dataclasses import dataclass
 
 DEFAULT_GLM_BASE_URL = "https://open.bigmodel.cn/api/paas/v4"
-DEFAULT_GLM_MODEL = "glm-4-flash"
+# 默认用 glm-4.6：glm-4-flash 更便宜，但实测在「真正调用工具完成任务」上明显偏弱
+# （只会给建议、反问用户,不执行 create_return_request）。可用 GLM_MODEL 覆盖。
+DEFAULT_GLM_MODEL = "glm-4.6"
+DEFAULT_EMBEDDING_MODEL = "embedding-3"
 
 
 @dataclass
@@ -80,6 +83,14 @@ class ChatClient:
             if tool_choice:
                 body["tool_choice"] = tool_choice
         return self._post("/chat/completions", body)
+
+    def embed(self, texts: list[str], model: str | None = None) -> list[dict]:
+        """``/embeddings``（OpenAI 兼容），返回 ``data`` 列表（含 embedding）。"""
+        response = self._post("/embeddings", {
+            "model": model or DEFAULT_EMBEDDING_MODEL,
+            "input": texts,
+        })
+        return response.get("data") or []
 
     # ------------------------------------------------------------------
     def _post(self, path: str, body: dict) -> dict:

@@ -14,7 +14,7 @@
 - [核心能力](#核心能力)
 - [快速开始](#快速开始)
 - [业务数据（假的企业业务系统）](#业务数据假的企业业务系统)
-- [最小版 Agent（Step 3 / Step 4）](#最小版-agentstep-3--step-4)
+- [分阶段构建（Step 3 → Step 10）](#分阶段构建step-3--step-10)
 - [六个核心场景](#六个核心场景)
 - [执行流程 / Agent Loop](#执行流程--agent-loop)
 - [目录结构](#目录结构)
@@ -37,7 +37,7 @@
 | 意图识别 | 7 类意图，有序正则规则，确定性、可测试 |
 | 任务规划 | 按意图生成执行步骤，Runtime 真正逐步执行（不是装饰性文字） |
 | 工具调用 | Tool Registry + JSON Schema，可直接对接 OpenAI function calling |
-| RAG | 售后政策知识库检索（query rewrite → 关键词打分 → rerank），无需 embedding |
+| RAG | 售后知识库检索：query rewrite → embedding（GLM / 离线）→ 向量检索 → rerank |
 | 记忆 / 上下文 | 会话级 Memory，多轮输入可解析「昨天买的那个」这类指代 |
 | 权限控制 | 按风险等级 + 金额阈值分级：自动 / 二次确认 / 人工审批 |
 | Human-in-the-loop | 支持挂起任务后 `resume(confirm=True/False)` 继续或取消 |
@@ -58,13 +58,21 @@
 # 1) 准备业务数据 —— 生成"假的企业业务系统"（1000 users / 5000 orders / …）
 python scripts/generate_data.py --stats
 
-# 2) 最小版 Agent（Step 3/4）：3 个工具 + 3 个问题，需要 GLM_API_KEY
+# 2) 建立售后知识库（50~100 份规则文档）
+python scripts/generate_policies.py
+
+# 3) Step 3~6：最小版 Agent（3+1 个工具、3 个基础问题 + 退货任务），需要 GLM_API_KEY
 python scripts/run_minimal_agent.py
 
-# 3) 完整版六场景 Demo（默认确定性 RuleBasedBrain，无需任何 API Key）
+# 4) Step 7~10：Planner / 记忆 / 异常恢复（离线可跑）
+python scripts/run_planner_demo.py
+python scripts/run_memory_agent.py      # 需 GLM_API_KEY
+python scripts/run_fault_demo.py
+
+# 5) 完整版六场景 Demo（默认确定性 RuleBasedBrain，无需任何 API Key）
 python scripts/run_demo.py
 
-# 4) 运行测试
+# 6) 运行测试
 python -m pytest -q
 ```
 
@@ -139,9 +147,15 @@ logistics（状态与订单一致），after_sale 只挂在已签收订单上，
 
 ---
 
-## 最小版 Agent（Step 3 / Step 4）
+## 分阶段构建（Step 3 → Step 10）
 
-设计里的那张图，就是一个完整实现 —— **没有 Planner**：
+项目按阶段往上长，每一步都有可运行的 demo。完整版（Planner + 6 工具 + 权限 + 人工接管 +
+Trace）在 `app/agent/runtime.py`，最小版与它共用同一套工具层与数据层。
+
+GLM 接入（OpenAI 兼容）：`GLM_API_KEY` 必填，`GLM_BASE_URL` 默认
+`https://open.bigmodel.cn/api/paas/v4`，`GLM_MODEL` 默认 `glm-4.6`（见「配置项」）。
+
+### Step 3 / 4：最基础 Agent + 三个工具
 
 ```text
 User  →  LLM  →  Tool  →  Tool Result  →  LLM  →  Answer
@@ -151,46 +165,114 @@ User  →  LLM  →  Tool  →  Tool Result  →  LLM  →  Answer
 python scripts/run_minimal_agent.py
 ```
 
-* 只暴露 3 个工具：`query_order` / `query_logistics` / `search_after_sales_policy`
-  （`app/tools/business.py::build_minimal_registry`）。
-* LLM 由 function calling 自主决定调哪个工具；工具结果以标准 `role: tool` 消息回灌，
-  直到模型给出最终回答（`app/agent/minimal_agent.py`）。
-* 无执行计划、无权限门、无人工接管 —— 这些在完整版 `AgentRuntime` 里，最小版刻意省略。
+只暴露 `query_order` / `query_logistics` / `search_after_sales_policy`
+（`build_minimal_registry`），**没有 Planner**；LLM 通过 function calling 自己决定下一步
+（`app/agent/minimal_agent.py`）。跑通三个问题：订单什么时候发货 / 快递到哪里 / 这个耳机能退吗。
 
-**接入 GLM**（OpenAI 兼容，沿用最熟悉的方式）：
-
-```bash
-export GLM_API_KEY=...                                   # 或写进 ~/.hermes/.env
-export GLM_BASE_URL=https://open.bigmodel.cn/api/paas/v4 # 默认值
-export GLM_MODEL=glm-4-flash                             # 可选 glm-4.6 / glm-4-plus
-```
-
-实测输出（真实调用 `glm-4-flash`）：
+### Step 5：加入退货工具，从「回答」到「完成任务」
 
 ```text
-[llm] model=glm-4-flash base_url=https://open.bigmodel.cn/api/paas/v4
-[tools] query_order, query_logistics, search_after_sales_policy
-
-=== 问题1｜U10001｜我的订单什么时候发货? ===
-  step1  tool  query_order({'user_id': 'U10001'})  -> ok
-  状态   : completed   轮次: 2
-  回答   : 您的订单O10001已经支付，但尚未发货…
-
-=== 问题2｜U10002｜我的快递到哪里了? ===
-  step1  tool  query_order({'user_id': 'U10002'})        -> ok
-  step2  tool  query_logistics({'order_id': 'O10002'})   -> ok
-  状态   : completed   轮次: 3
-  回答   : 您的快递正在运输中，目前位于武汉洪山转运中心…
-
-=== 问题3｜U10003｜这个耳机能退吗? ===
-  step1  tool  query_order({'user_id': 'U10003'})                        -> ok
-  step2  tool  search_after_sales_policy({'query': '耳机退货政策'})       -> ok
-  状态   : completed   轮次: 3
-  回答   : 根据查询到的信息，您购买的无线耳机支持7天无理由退货…
+query_order → search_after_sales_policy → 判断资格 → create_return_request
 ```
 
-这一步跑通之后，就有了第一个可以展示的 Agent。完整版（Planner + 6 工具 + 权限 +
-人工接管 + Trace）仍然保留在 `app/agent/runtime.py`，两者共用同一套工具层与数据层。
+工具集升级为 4 个（`RETURN_TOOLS`）。实测（`glm-4.6`）：
+
+```text
+=== 问题4｜U10003｜我的耳机坏了,我想退货。 ===
+  step1  query_order({'user_id': 'U10003'})                            -> ok
+  step2  search_after_sales_policy({'query': '质量问题退货期限和规则'})   -> ok
+  step5  create_return_request({'order_id': 'O10003', ...})            -> ok
+  回答   : 已为您成功创建退货申请,申请单号 R20260927001 …
+```
+
+> 这是项目第一次体现：**Agent 不是回答，而是在完成任务**。实测 `glm-4-flash` 只会给建议、
+> 反问用户，不执行工具，所以默认模型选 `glm-4.6`。
+
+### Step 6：Agent Loop —— 流程不写死
+
+代码里没有 `query_order(); search_policy(); create_return()` 这种固定调用。循环是：
+
+```text
+Think → Act → Observe → Think → Act → …
+```
+
+下一步调什么由 LLM 决定。同一套工具、不同问题会走出完全不同的工具链：问题1 只查订单，
+问题2 查订单+物流，问题4 查订单+政策+建退货——这就是 Agent 与 Workflow 的区别。
+
+### Step 7：Planner（复杂任务先规划）
+
+```bash
+python scripts/run_planner_demo.py
+```
+
+```text
+用户   : 我的耳机坏了,而且订单好像也找不到了,我想退货。
+[Planner] 生成的执行计划:
+  1. 查询订单  2. 查询商品  3. 检索售后政策
+  4. 判断退货资格  5. 创建退货申请或转人工  6. 返回结果
+[Runtime] 实际执行的工具链:
+  query_order -> search_after_sales_policy -> create_return_request
+```
+
+一句话：**Planner 决定「做什么」，Runtime 决定「怎么可靠地执行」**（权限校验 / 重试 /
+人工接管 / Trace）。
+
+### Step 8：RAG 知识库（50~100 份规则文档 + 真 Embedding）
+
+```bash
+python scripts/generate_policies.py     # -> data/policies/ 共 66 份
+```
+
+检索流水线：`Query Rewrite → Embedding → Vector Search → Rerank → Policy Context`。
+
+* `app/rag/tokenize.py` —— 中文 bigram + 拉丁词的分词与 query rewrite
+* `app/rag/embeddings.py` —— `GLMEmbedder`（GLM `/embeddings`，embedding-3，2048 维）
+  与离线确定性的 `HashingEmbedder`
+* `app/rag/vector_store.py` —— 余弦相似度向量索引
+* `app/rag/policy_rag.py` —— 融合「向量相似度」与「词面命中（标题加权）」的 Rerank
+
+默认用离线 embedder（测试确定、不依赖网络）；要真·语义检索：
+
+```bash
+export AGENT_RAG_EMBEDDINGS=glm
+```
+
+### Step 9：Context / Memory —— 记住任务状态
+
+```bash
+python scripts/run_memory_agent.py
+```
+
+```text
+第1轮: 我的耳机坏了。      -> 记住 当前用户 / 当前订单 / 当前商品
+第2轮: 就是昨天那个订单。   -> 注入 [会话上下文] 后直接复用,不再反问用户
+```
+
+`app/memory/session.py` 的 `SessionMemory` 第一版就是 Python dict（之后可替换 Redis）。
+
+### Step 10：异常恢复 —— 故意制造错误
+
+```bash
+python scripts/run_fault_demo.py
+```
+
+对工具注入 10% timeout / 5% error，然后观察：
+
+```text
+Tool Call → Timeout → Retry → Retry → 仍失败 → Fallback → Human Ticket
+```
+
+实测（连跑 20 次）：11 次出现重试，1 次重试耗尽转为人工工单；强制 100% 超时时链路：
+
+```text
+query_order          attempts=3  -> FAIL(timeout)
+create_human_ticket  attempts=1  -> ok
+状态   : escalated
+回答   : 您的情况需要人工处理,已创建工单T202609270001 …
+```
+
+> 面试可用的一句话：不是把 Agent 做成理想环境下的 Demo，而是针对真实业务中的工具失败，
+> 设计了 Retry、Fallback 和人工接管机制。
 
 ---
 
@@ -248,26 +330,37 @@ business-task-agent/
 │   │   ├── planner.py            # 任务规划（意图 → 执行步骤）
 │   │   ├── brain.py              # RuleBasedBrain：确定性决策
 │   │   ├── llm_brain.py          # OpenAIBrain：LLM function calling 决策
-│   │   ├── llm_client.py         # OpenAI 兼容 Chat 客户端（GLM 接入）
+│   │   ├── llm_client.py         # OpenAI 兼容 Chat/Embeddings 客户端（GLM 接入）
 │   │   ├── minimal_agent.py      # 最小版 Agent：无 Planner 的 LLM↔Tool 循环
 │   │   ├── permissions.py        # 权限分级（金额阈值 + 风险等级）
 │   │   └── runtime.py            # AgentRuntime：执行主循环 + 人工接管
 │   ├── tools/
 │   │   ├── registry.py           # ToolRegistry + ToolExecutor（超时/重试/退避/分类）
-│   │   └── business.py           # 6 个业务工具 + 最小版 3 工具注册表
+│   │   ├── business.py           # 6 个业务工具 + 最小版 3/4 工具注册表
+│   │   └── faults.py             # 故障注入（10% timeout / 5% error）
 │   ├── data/generator.py         # 业务数据生成器（1000/3000/5000/5000/500）
-│   ├── rag/policy_rag.py         # 售后政策 RAG（rewrite → 打分 → rerank）
-│   ├── memory/context.py         # TaskContext + MemoryStore（会话级记忆）
+│   ├── rag/
+│   │   ├── tokenize.py           # 中文 bigram 分词 + query rewrite
+│   │   ├── embeddings.py         # GLMEmbedder / HashingEmbedder
+│   │   ├── vector_store.py       # 余弦向量索引
+│   │   └── policy_rag.py         # RAG 流水线（rewrite→embed→search→rerank）
+│   ├── memory/
+│   │   ├── context.py            # TaskContext + MemoryStore（完整版）
+│   │   └── session.py            # SessionMemory（最小版，dict→可换 Redis）
 │   ├── trace/tracer.py           # Tracer / Span（JSONL 落盘）
-│   └── store.py                  # SQLite 数据层（种子数据 / 打开生成的业务库）
+│   └── store.py                  # SQLite 数据层（种子 / 生成库 / 临时副本）
 ├── data/
 │   ├── business.db               # 生成的"假企业业务系统"（SQLite）
-│   └── policies/*.md             # 售后政策知识库（8 个规则文档）
+│   └── policies/*.md             # 售后知识库（66 份规则文档）
 ├── scripts/
 │   ├── generate_data.py          # 生成业务数据
-│   ├── run_minimal_agent.py      # 最小版 Agent：3 工具 + 3 问题
+│   ├── generate_policies.py      # 生成售后知识库
+│   ├── run_minimal_agent.py      # Step 3~6：最小版 Agent
+│   ├── run_planner_demo.py       # Step 7：Planner
+│   ├── run_memory_agent.py       # Step 9：多轮记忆
+│   ├── run_fault_demo.py         # Step 10：故障注入 / Retry / 人工接管
 │   └── run_demo.py               # 完整版六场景 Demo 入口
-├── tests/                        # 49 个测试
+├── tests/                        # 66 个测试
 ├── eval/                         # 评测数据集 / 评测器 / 报告（预留）
 └── docker/                       # 容器化（预留）
 ```
@@ -302,15 +395,18 @@ OpenAI function-calling schema；`ToolExecutor` 为每次调用包裹超时、�
 由 `AgentRuntime.resume(session_id, confirm=...)` 继续或取消。阈值可由构造函数配置，
 属于业务配置而非硬编码。
 
-### RAG `app/rag/policy_rag.py`
-对 `data/policies/*.md` 做确定性检索：query rewrite（去停用词）→ 中文 bigram + 拉丁词
-打分（越稀有的词权重越高，语料级停用词降权）→ rerank（标题/章节命中加权）。无需
-embedding，`retrieve()` 即后续替换为向量检索 + rerank 模型的接入点。
+### RAG `app/rag/`
+流水线：`Query Rewrite → Embedding → Vector Search → Rerank`。
+`tokenize.py` 做中文 bigram 分词与 rewrite；`embeddings.py` 提供 `GLMEmbedder`
+（GLM `/embeddings`）与离线确定性的 `HashingEmbedder`；`vector_store.py` 是余弦索引；
+`policy_rag.py` 把「向量相似度」与「词面命中（标题/章节加权，语料级停用词降权）」融合
+成最终 Rerank 分。embedder 用依赖注入：默认离线，需要真语义检索时注入 `GLMEmbedder`。
 
-### 记忆 `app/memory/context.py`
-`TaskContext` 保存意图、计划、槽位（order_id / product / risk_level）、工具观测与历史；
-`MemoryStore` 以会话为粒度，新一轮继承上一轮的槽位与历史，从而支持「昨天买的那个」
-这类跨轮指代。
+### 记忆 `app/memory/`
+`context.py`：`TaskContext` 保存意图、计划、槽位（order_id / product / risk_level）、工具
+观测与历史；`MemoryStore` 以会话为粒度，新一轮继承上一轮的槽位与历史。`session.py`：
+最小版用的 `SessionMemory`，从工具结果里抽取任务槽位并渲染成注入下一轮的 `[会话上下文]`
+——第一版就是 Python dict，接口不变即可换成 Redis。
 
 ### 数据层 `app/store.py`
 SQLite（默认内存库）+ 种子数据，表结构对齐 DESIGN.md 第 8 节
@@ -397,7 +493,8 @@ error / retry_count`，供后续 Eval 引擎与 Bad Case 分析回放整条执�
 | --- | --- | --- |
 | `GLM_API_KEY` | 最小版 Agent 调 GLM 的密钥（优先） | 未设置 |
 | `GLM_BASE_URL` | GLM 端点 | `https://open.bigmodel.cn/api/paas/v4` |
-| `GLM_MODEL` | GLM 模型名 | `glm-4-flash`（另有 glm-4.6 / glm-4-plus / glm-4-air …） |
+| `GLM_MODEL` | GLM 模型名 | `glm-4.6`（可选 glm-4-flash / glm-4-plus / glm-4-air …） |
+| `AGENT_RAG_EMBEDDINGS` | 设为 `glm` 用 GLM embedding 做语义检索，否则离线 | 离线 `HashingEmbedder` |
 | `OPENAI_API_KEY` | 回退密钥；设置后 `run_demo.py` 使用 `OpenAIBrain` | 未设置 |
 | `OPENAI_BASE_URL` / `OPENAI_MODEL` | 回退端点 / 模型 | `https://api.openai.com/v1` / `gpt-4o-mini` |
 | `AGENT_DB_PATH` | 业务库路径（`open_store()`） | `data/business.db` |
@@ -412,7 +509,7 @@ backoff_base, backoff_max)`、`PermissionPolicy(auto_max, confirm_max)`）均可
 ## 测试
 
 ```bash
-python -m pytest -q          # 49 passed
+python -m pytest -q          # 66 passed
 ```
 
 覆盖范围（`tests/`）：
@@ -420,8 +517,10 @@ python -m pytest -q          # 49 passed
 | 文件 | 覆盖 |
 | --- | --- |
 | `test_agent_runtime.py` | 六个场景端到端、多轮记忆、权限分级、二次确认后 resume、工具失败 Fallback、Trace 链路完整性 |
-| `test_minimal_agent.py` | 最小版 3 工具、无 Planner 的 LLM↔Tool 循环、工具结果回灌、未知工具容错、最大步数（本地 fake server，无网络） |
-| `test_data_generator.py` | 精确规模（1000/3000/5000/5000/500）、确定性、引用完整性、演示用户、重复生成不累加 |
+| `test_minimal_agent.py` | 最小版 3/4 工具、无 Planner 的 LLM↔Tool 循环、工具结果回灌、未知工具容错、最大步数、动态提示词、跨轮记忆（本地 fake server，无网络） |
+| `test_data_generator.py` | 精确规模（1000/3000/5000/5000/500）、确定性、引用完整性、演示订单干净、重复生成不累加 |
+| `test_rag_pipeline.py` | HashingEmbedder 确定性与相似度、GLMEmbedder（假 client）、余弦索引排序、知识库规模、RAG 流水线 |
+| `test_faults.py` | 故障注入不改动原注册表、重试耗尽 → 人工工单、只影响指定工具、seed 可复现 |
 | `test_intents.py` | 七类意图识别与优先级 |
 | `test_llm_brain.py` | LLM Brain 解析 tool_calls / 最终回答（本地 fake server，无网络） |
 | `test_policy_rag.py` | query rewrite、检索与 rerank、政策命中 |
@@ -437,6 +536,12 @@ python -m pytest -q          # 49 passed
 - **数据准备** ✅ 自己造"假的企业业务系统"（不接真实淘宝/京东）
 - **Step 3** ✅ 接入 GLM，最小 Agent 循环（无 Planner）
 - **Step 4** ✅ 只做三个工具，跑通三个展示问题
+- **Step 5** ✅ 加入 create_return_request，真正「完成任务」而非「回答」
+- **Step 6** ✅ Agent Loop：下一步由 LLM 决定，流程不写死
+- **Step 7** ✅ Planner：复杂任务先规划，Runtime 负责可靠执行
+- **Step 8** ✅ RAG：66 份规则文档 + Embedding/向量检索/Rerank
+- **Step 9** ✅ Context / Memory：跨轮记住任务状态
+- **Step 10** ✅ 异常恢复：故障注入 + Retry + Fallback + 人工接管
 - **V1（已完成）** Python / OpenAI 兼容 LLM API / SQLite / 简单 Tool Calling / RAG
 - **V2** FastAPI / PostgreSQL / Redis / Agent Runtime / Trace
 - **V3** MCP / Permission / Human-in-the-loop / Retry / Fallback

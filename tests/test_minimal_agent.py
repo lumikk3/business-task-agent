@@ -11,10 +11,11 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import pytest
 
 from app.agent.llm_client import ChatClient, LLMConfig
-from app.agent.minimal_agent import MinimalAgent
+from app.agent.minimal_agent import MinimalAgent, build_system_prompt
+from app.memory.session import SessionMemory
 from app.rag.policy_rag import PolicyRAG
 from app.store import reset_store
-from app.tools.business import BusinessTools, build_minimal_registry
+from app.tools.business import MINIMAL_TOOLS, RETURN_TOOLS, BusinessTools, build_minimal_registry
 from app.tools.registry import ToolExecutor
 
 REQUESTS: list[dict] = []
@@ -62,12 +63,13 @@ def _answer(text: str) -> dict:
             "usage": {"total_tokens": 5}}
 
 
-def _agent(base_url: str, max_steps: int = 6) -> MinimalAgent:
+def _agent(base_url: str, max_steps: int = 6, memory=None,
+           names=MINIMAL_TOOLS) -> MinimalAgent:
     tools = BusinessTools(reset_store(), policy_search=PolicyRAG().retrieve)
-    registry = build_minimal_registry(tools)
+    registry = build_minimal_registry(tools, names)
     executor = ToolExecutor(registry, max_retries=1, timeout_s=2.0, sleep=lambda _s: None)
-    client = ChatClient(LLMConfig(base_url=base_url, api_key="test", model="glm-4-flash"))
-    return MinimalAgent(client, registry, executor, max_steps=max_steps)
+    client = ChatClient(LLMConfig(base_url=base_url, api_key="test", model="glm-4.6"))
+    return MinimalAgent(client, registry, executor, max_steps=max_steps, memory=memory)
 
 
 def test_minimal_registry_exposes_only_three_tools():
@@ -75,6 +77,23 @@ def test_minimal_registry_exposes_only_three_tools():
     registry = build_minimal_registry(tools)
     assert set(registry.names()) == {
         "query_order", "query_logistics", "search_after_sales_policy"}
+
+
+def test_step5_registry_adds_create_return_request():
+    tools = BusinessTools(reset_store(), policy_search=PolicyRAG().retrieve)
+    registry = build_minimal_registry(tools, RETURN_TOOLS)
+    assert "create_return_request" in registry.names()
+    assert registry.risk_level("create_return_request").value == "MEDIUM"
+
+
+def test_system_prompt_only_describes_available_tools():
+    tools = BusinessTools(reset_store(), policy_search=PolicyRAG().retrieve)
+    prompt_3 = build_system_prompt(build_minimal_registry(tools, MINIMAL_TOOLS))
+    assert "query_order" in prompt_3
+    assert "create_return_request" not in prompt_3     # 没提供的工具不该出现在提示词里
+
+    prompt_4 = build_system_prompt(build_minimal_registry(tools, RETURN_TOOLS))
+    assert "create_return_request" in prompt_4
 
 
 def test_loop_tool_then_answer(fake_llm):
@@ -120,3 +139,24 @@ def test_max_steps_stops_runaway_loop(fake_llm):
     result = _agent(fake_llm, max_steps=3).run("一直查订单", user_id="U10001")
     assert result.status == "max_steps"
     assert result.iterations == 3
+
+
+# ---- Step 9: memory ---------------------------------------------------
+def test_memory_carries_task_state_across_turns(fake_llm):
+    memory = SessionMemory()
+    agent = _agent(fake_llm, memory=memory)
+
+    # 第1轮: 调 query_order,记忆里应落下当前订单
+    _Handler.queue.append(_tool_call("query_order", {"user_id": "U10001"}))
+    _Handler.queue.append(_answer("已查到您的订单。"))
+    agent.run("我的耳机坏了。", user_id="U10001", session_id="s1")
+    order_id = memory.slots("s1").get("order_id")
+    assert order_id, "第1轮后应记住当前订单"
+
+    # 第2轮: 用户用指代,注入的上下文里应带上当前订单
+    REQUESTS.clear()
+    _Handler.queue.append(_answer("就是那个订单。"))
+    agent.run("就是昨天那个订单。", user_id="U10001", session_id="s1")
+    user_msg = next(m for m in REQUESTS[0]["messages"] if m["role"] == "user")
+    assert "[会话上下文]" in user_msg["content"]
+    assert order_id in user_msg["content"]

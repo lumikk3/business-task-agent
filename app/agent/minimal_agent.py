@@ -1,37 +1,59 @@
-"""最小版 Agent（Step 3 / Step 4）—— 没有 Planner。
+"""最小版 Agent（Step 3~6 / Step 9）—— 没有 Planner。
 
 唯一的核心循环就是设计里那一张图：
 
     User -> LLM -> Tool -> Tool Result -> LLM -> Answer
 
-不生成执行计划、不做权限门、不做 RAG 之外的编排；LLM 通过 function calling
-自己决定调哪个工具，工具结果以标准 ``role: tool`` 消息回灌，直到模型给出最终回答。
+也就是 Think -> Act -> Observe -> Think -> Act ...：下一步调用什么工具**由 LLM
+决定**，不是代码里写死的 ``query_order(); search_policy(); create_return()``。
+工具结果以标准 ``role: tool`` 消息回灌，直到模型给出最终回答。
+
+可选地挂一个 ``SessionMemory``（Step 9），让跨轮的任务状态（当前订单/商品）延续下去。
 
 对比完整版 ``AgentRuntime``（含 Planner / 权限 / 人工接管 / Trace），这里是刻意的
-最小实现，用来先跑通第一个可展示的 Agent。
+最小实现。
 """
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import Any
 
 from app.tools.registry import ToolExecutor, ToolRegistry
 
-DEFAULT_SYSTEM_PROMPT = """你是电商售后客服 Agent。你可以调用工具查询业务系统来回答用户问题。
+_PROMPT_HEADER = (
+    "你是电商售后客服 Agent。你的目标是通过调用工具**完成**用户的业务任务,"
+    "而不只是回答问题。\n\n可用工具:\n{tools}\n\n规则:\n{rules}"
+)
 
-可用工具:
-- query_order(user_id): 查询用户的订单,包含商品、订单状态、售后与退款记录
-- query_logistics(order_id): 查询订单的物流状态、承运商与最新轨迹
-- search_after_sales_policy(query): 检索售后政策知识库(退货、退款、运费、人工审核规则)
+_BASE_RULES = [
+    "先调用工具拿真实数据再回答,不要编造订单号、物流或政策内容。",
+    "用户消息里会给出用户ID,并可能带有 [会话上下文]。",
+    "问物流:先用 query_order 找到订单,再用 query_logistics 查物流。",
+    "问能不能退/售后政策:先用 query_order 拿商品与签收日期,"
+    "再用 search_after_sales_policy 检索政策,结合签收天数给出结论。",
+]
 
-规则:
-1. 先调用工具拿真实数据再回答,不要编造订单号、物流或政策内容。
-2. 用户消息里会给出用户ID。
-3. 问物流时先用 query_order 找到订单,再用 query_logistics 查物流。
-4. 问"能不能退/售后政策"时先用 query_order 拿到商品与签收时间,再用
-   search_after_sales_policy 检索政策,结合签收天数给出结论。
-5. 信息足够后直接给出简洁的中文最终回答,不要再调用工具。"""
+_RETURN_RULE = (
+    "用户明确要求退货时,你要真正把任务办完,而不是只给建议:先 query_order 确认订单已签收"
+    "并拿到签收日期,再用 search_after_sales_policy 确认仍在期限内(7天无理由 / 质量问题15天),"
+    "满足条件就直接调用 create_return_request 创建退货申请。"
+    "用户既然已经说要退货,就不要反问「是否需要为您创建」或索要多余确认,直接办理;"
+    "只有在超期、金额过大或政策冲突时才只说明原因并建议人工客服。"
+)
+
+
+def build_system_prompt(registry: ToolRegistry) -> str:
+    """按当前注册表动态生成提示词 —— 只描述真正可用的工具与规则。"""
+    tools = "\n".join(f"- {spec.name}: {spec.description}" for spec in registry.specs())
+    names = registry.names()
+    rules = list(_BASE_RULES)
+    if "create_return_request" in names:
+        rules.append(_RETURN_RULE)
+    if "create_human_ticket" in names:
+        rules.append("风险过高、政策冲突或工具连续失败时,调用 create_human_ticket 转人工。")
+    rules.append("信息足够后给出简洁的中文最终回答,不要再调用工具。")
+    numbered = "\n".join(f"{i}. {rule}" for i, rule in enumerate(rules, start=1))
+    return _PROMPT_HEADER.format(tools=tools, rules=numbered)
 
 
 @dataclass
@@ -49,6 +71,7 @@ class ToolCall:
 class MinimalResult:
     user_input: str
     user_id: str | None
+    session_id: str
     answer: str
     status: str                       # completed | max_steps | error
     tool_calls: list[ToolCall] = field(default_factory=list)
@@ -60,6 +83,7 @@ class MinimalResult:
         return {
             "user_input": self.user_input,
             "user_id": self.user_id,
+            "session_id": self.session_id,
             "answer": self.answer,
             "status": self.status,
             "iterations": self.iterations,
@@ -76,22 +100,36 @@ class MinimalResult:
 
 class MinimalAgent:
     def __init__(self, client, registry: ToolRegistry, executor: ToolExecutor,
-                 system_prompt: str = DEFAULT_SYSTEM_PROMPT, max_steps: int = 6):
+                 system_prompt: str | None = None, max_steps: int = 6,
+                 memory=None):
         self.client = client
         self.registry = registry
         self.executor = executor
-        self.system_prompt = system_prompt
+        self.system_prompt = system_prompt or build_system_prompt(registry)
         self.max_steps = max_steps
+        self.memory = memory
 
     # ------------------------------------------------------------------
-    def run(self, user_input: str, user_id: str | None = None) -> MinimalResult:
-        user_content = f"用户ID: {user_id}\n用户问题: {user_input}" if user_id else user_input
+    def run(self, user_input: str, user_id: str | None = None,
+            session_id: str = "default") -> MinimalResult:
+        if self.memory is not None and user_id:
+            self.memory.note(session_id, "user_id", user_id)
+
+        context = self.memory.context_block(session_id) if self.memory else ""
+        head = []
+        if context:
+            head.append(context)
+        if user_id:
+            head.append(f"用户ID: {user_id}")
+        head.append(f"用户问题: {user_input}")
+        user_content = "\n".join(head)
+
         messages: list[dict] = [
             {"role": "system", "content": self.system_prompt},
             {"role": "user", "content": user_content},
         ]
         result = MinimalResult(user_input=user_input, user_id=user_id,
-                               answer="", status="error")
+                               session_id=session_id, answer="", status="error")
         result.steps.append({"step": 0, "type": "user", "content": user_content})
         schemas = self.registry.schemas()
 
@@ -110,22 +148,26 @@ class MinimalAgent:
                     "tool_calls": tool_calls,
                 })
                 for call in tool_calls:
-                    self._run_tool_call(call, messages, result, step)
+                    self._run_tool_call(call, messages, result, step, session_id)
                 continue
 
             result.answer = (message.get("content") or "").strip()
             result.status = "completed"
             result.steps.append({"step": step, "type": "answer", "content": result.answer})
-            return result
+            break
+        else:
+            result.answer = "（达到最大步数仍未得到最终回答）"
+            result.status = "max_steps"
+            result.steps.append({"step": self.max_steps, "type": "answer",
+                                 "content": result.answer})
 
-        result.answer = "（达到最大步数仍未得到最终回答）"
-        result.status = "max_steps"
-        result.steps.append({"step": self.max_steps, "type": "answer", "content": result.answer})
+        if self.memory is not None:
+            self.memory.remember_turn(session_id, user_input, result.answer)
         return result
 
     # ------------------------------------------------------------------
     def _run_tool_call(self, call: dict, messages: list[dict],
-                       result: MinimalResult, step: int) -> None:
+                       result: MinimalResult, step: int, session_id: str) -> None:
         function = call.get("function") or {}
         name = function.get("name") or ""
         try:
@@ -134,17 +176,19 @@ class MinimalAgent:
             arguments = {}
 
         outcome = self.executor.execute(name, arguments)
-        record = ToolCall(
+        result.tool_calls.append(ToolCall(
             name=name, arguments=arguments, ok=outcome.ok,
             result=outcome.data if outcome.ok else None,
             error=outcome.error, latency_ms=outcome.latency_ms, attempts=outcome.attempts,
-        )
-        result.tool_calls.append(record)
+        ))
         result.steps.append({
             "step": step, "type": "tool", "tool": name, "arguments": arguments,
             "ok": outcome.ok, "latency_ms": round(outcome.latency_ms, 2),
             "attempts": outcome.attempts, "error": outcome.error,
         })
+
+        if self.memory is not None and outcome.ok:
+            self.memory.observe(session_id, name, outcome.data)
 
         # 工具结果以 role: tool 回灌给 LLM —— 这就是图里的 "Tool Result"
         messages.append({

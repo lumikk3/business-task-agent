@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import pytest
 
 from app.agent.llm_brain import OpenAIBrain, has_llm_credentials
+from app.agent.llm_client import resolve_llm_config
 from app.memory.context import MemoryStore
 from app.rag.policy_rag import PolicyRAG
 from app.store import reset_store
@@ -82,7 +83,23 @@ def test_llm_brain_parses_final_answer(fake_llm):
 
 
 def test_has_llm_credentials_respects_env(monkeypatch):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("MIMO_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     assert has_llm_credentials() is False
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     assert has_llm_credentials() is True
+
+
+def test_llm_variables_are_the_single_switch(monkeypatch):
+    monkeypatch.setenv("LLM_API_KEY", "mimo-test")
+    monkeypatch.setenv("LLM_BASE_URL", "https://mimo.example/v1")
+    monkeypatch.setenv("LLM_MODEL", "mimo-test-model")
+    monkeypatch.setenv("MIMO_API_KEY", "legacy-key")
+    monkeypatch.setenv("MIMO_MODEL", "legacy-model")
+
+    config = resolve_llm_config()
+
+    assert config.api_key == "mimo-test"
+    assert config.base_url == "https://mimo.example/v1"
+    assert config.model == "mimo-test-model"

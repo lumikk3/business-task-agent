@@ -86,6 +86,29 @@ def test_agent_writes_through_to_postgres():
     assert store.get_after_sale("O10003"), "PG 里读不回刚创建的退货单"
 
 
+@pg_only
+def test_pg_store_recovers_after_admin_shutdown():
+    """真实制造一次 AdminShutdown：让服务端杀掉本连接，下一次查询必须自动恢复。
+
+    ``pg_terminate_backend`` 触发的正是 ``FATAL: terminating connection due to
+    administrator command`` —— 与 PostgreSQL 重启（AdminShutdown）同一类错误。
+    """
+    import psycopg
+
+    store = open_business_store()
+    assert store.find_orders("U10003"), "前置条件：先确认连接可用"
+
+    pid = store.backend_pid()
+    assert pid, "拿不到 backend pid"
+    with psycopg.connect(database_url(), autocommit=True) as killer:
+        with killer.cursor() as cur:
+            cur.execute("SELECT pg_terminate_backend(%s)", (pid,))
+
+    # 连接已被服务端终止 -> 必须自动重连，而不是把错误抛给调用方
+    assert store.find_orders("U10003"), "断线后没有自动恢复"
+    assert store.ping() is True
+
+
 @redis_only
 def test_redis_session_memory_persists_across_instances():
     first = open_session_memory()

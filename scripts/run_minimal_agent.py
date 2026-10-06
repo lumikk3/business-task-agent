@@ -3,9 +3,9 @@
 
     python scripts/run_minimal_agent.py
 
-循环：User -> LLM(GLM) -> Tool -> Tool Result -> LLM -> Answer，没有 Planner。
+循环：User -> LLM(MiMo) -> Tool -> Tool Result -> LLM -> Answer，没有 Planner。
 
-需要 GLM_API_KEY（默认读 ~/.hermes/.env 或环境变量，见 app/agent/llm_client.py）。
+需要 MIMO_API_KEY（默认读项目根目录 `.env` 或环境变量，见 app/agent/llm_client.py）。
 业务数据来自 data/business.db，缺失时会自动生成。
 """
 from __future__ import annotations
@@ -63,12 +63,12 @@ def show(index: int, user_id: str, question: str, result) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--db", default=str(DEFAULT_DB_PATH))
-    parser.add_argument("--model", default=None, help="覆盖模型名 (默认 glm-4-flash)")
+    parser.add_argument("--model", default=None, help="覆盖模型名 (默认 mimo-v2-flash)")
     args = parser.parse_args()
 
     if not has_llm_credentials():
-        print("[error] 未找到 GLM_API_KEY / OPENAI_API_KEY，无法调用 LLM。")
-        print("        可 export GLM_API_KEY=... 或写入 ~/.hermes/.env 后重试。")
+        print("[error] 未找到 MIMO_API_KEY / OPENAI_API_KEY，无法调用 LLM。")
+        print("        请将 MIMO_API_KEY=... 写入项目根目录 .env 后重试。")
         raise SystemExit(2)
 
     agent = build_agent(args.db, model=args.model)

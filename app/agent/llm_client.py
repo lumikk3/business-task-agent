@@ -1,18 +1,18 @@
-"""OpenAI 兼容的 Chat 客户端（GLM / 智谱 接入）。
+"""OpenAI 兼容的 Chat 客户端（MiMo / OpenAI 接入）。
 
-GLM 提供 OpenAI 兼容接口，所以这里沿用最熟悉的方式：POST
+MiMo 提供 OpenAI 兼容接口，所以这里沿用标准方式：POST
 ``/chat/completions``，``tools`` 走标准 function-calling 字段。
 
-默认配置为智谱 GLM：
+默认配置为 Xiaomi MiMo：
 
-    base_url = https://open.bigmodel.cn/api/paas/v4
-    model    = glm-4-flash        (可选 glm-4.6 / glm-4-plus / glm-4-air ...)
+    base_url = https://api.xiaomimimo.com/v1
+    model    = mimo-v2-flash
 
-环境变量（GLM_* 优先，其次 OPENAI_*）：
+环境变量（推荐只修改 LLM_*；旧变量仅作为兼容回退）：
 
-    GLM_API_KEY   / OPENAI_API_KEY     必填
-    GLM_BASE_URL  / OPENAI_BASE_URL    可选
-    GLM_MODEL     / OPENAI_MODEL       可选
+    LLM_API_KEY    必填
+    LLM_BASE_URL   可选
+    LLM_MODEL      可选
 """
 from __future__ import annotations
 
@@ -21,11 +21,10 @@ import os
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from pathlib import Path
 
-DEFAULT_GLM_BASE_URL = "https://open.bigmodel.cn/api/paas/v4"
-# 默认用 glm-4.6：glm-4-flash 更便宜，但实测在「真正调用工具完成任务」上明显偏弱
-# （只会给建议、反问用户,不执行 create_return_request）。可用 GLM_MODEL 覆盖。
-DEFAULT_GLM_MODEL = "glm-4.6"
+DEFAULT_MIMO_BASE_URL = "https://api.xiaomimimo.com/v1"
+DEFAULT_MIMO_MODEL = "mimo-v2-flash"
 DEFAULT_EMBEDDING_MODEL = "embedding-3"
 
 
@@ -40,25 +39,66 @@ class LLMConfig:
 def _first_env(*names: str) -> str | None:
     for name in names:
         value = os.environ.get(name)
-        if value:
+        if value and value.lower() not in {
+            "your_key", "your_mimo_api_key", "your_api_key", "changeme"
+        }:
             return value
     return None
 
 
+def _load_env_file(path: str | os.PathLike[str]) -> None:
+    file_path = Path(path)
+    if not file_path.exists():
+        return
+
+    for raw_line in file_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export "):]
+        if "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+
+        if not key:
+            continue
+        if " #" in value:
+            value = value.split(" #", 1)[0].strip()
+        os.environ.setdefault(key, value)
+
+
+def _load_default_env_files() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    candidates = [
+        Path.home() / ".hermes" / ".env",
+        Path.cwd() / ".env",
+        repo_root / ".env",
+    ]
+    for candidate in dict.fromkeys(str(p) for p in candidates):
+        _load_env_file(candidate)
+
+
+_load_default_env_files()
+
+
 def resolve_llm_config(base_url: str | None = None, api_key: str | None = None,
                        model: str | None = None, timeout_s: float | None = None) -> LLMConfig:
-    """显式参数 > GLM_* 环境变量 > OPENAI_* 环境变量 > 默认值。"""
+    """显式参数 > LLM_* 环境变量 > 旧 provider 变量 > 默认值。"""
     return LLMConfig(
-        base_url=(base_url or _first_env("GLM_BASE_URL", "OPENAI_BASE_URL")
-                  or DEFAULT_GLM_BASE_URL).rstrip("/"),
-        api_key=api_key or _first_env("GLM_API_KEY", "OPENAI_API_KEY") or "",
-        model=model or _first_env("GLM_MODEL", "OPENAI_MODEL") or DEFAULT_GLM_MODEL,
+        base_url=(base_url or _first_env("LLM_BASE_URL", "MIMO_BASE_URL", "OPENAI_BASE_URL")
+              or DEFAULT_MIMO_BASE_URL).rstrip("/"),
+        api_key=api_key or _first_env("LLM_API_KEY", "MIMO_API_KEY", "OPENAI_API_KEY") or "",
+        model=model or _first_env("LLM_MODEL", "MIMO_MODEL", "OPENAI_MODEL") or DEFAULT_MIMO_MODEL,
         timeout_s=timeout_s if timeout_s is not None else 60.0,
     )
 
 
 def has_llm_credentials() -> bool:
-    return bool(_first_env("GLM_API_KEY", "OPENAI_API_KEY"))
+    return bool(_first_env("LLM_API_KEY", "MIMO_API_KEY", "OPENAI_API_KEY"))
 
 
 class LLMError(RuntimeError):

@@ -21,6 +21,8 @@ services:
       POSTGRES_USER: hermes
       POSTGRES_PASSWORD: hermes
       POSTGRES_DB: business
+    ports:
+      - "5433:5432"
     volumes:
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
       - pgdata:/var/lib/postgresql/data
@@ -65,17 +67,16 @@ services:
 
   agent-api:
     build: { context: ., dockerfile: docker/Dockerfile.api }
+    ports:
+      - "8077:8077"
     environment:
-      # 有 GLM_API_KEY 时走 LLM Agent，否则回退确定性 Runtime
-      GLM_API_KEY: ${GLM_API_KEY:-}
-      GLM_BASE_URL: ${GLM_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
-      GLM_MODEL: ${GLM_MODEL:-glm-4.6}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
       # 这两个变量让 app/backend.py 真的切到 Postgres + Redis
       DATABASE_URL: postgresql://hermes:hermes@postgres:5432/business
       REDIS_URL: redis://redis:6379/0
       AGENT_RAG_EMBEDDINGS: ${AGENT_RAG_EMBEDDINGS:-}
-    ports:
-      - "8077:8077"
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }

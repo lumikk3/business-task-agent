@@ -49,7 +49,9 @@ def test_glm_embedder_uses_client_and_normalizes():
 
 def test_resolve_embedder_defaults_offline(monkeypatch):
     monkeypatch.delenv("AGENT_RAG_EMBEDDINGS", raising=False)
-    monkeypatch.delenv("GLM_API_KEY", raising=False)
+    # 凭据可能来自三处（.env 会在 import 期写入 os.environ），都要清掉才算「没凭据」
+    for name in ("LLM_API_KEY", "MIMO_API_KEY", "OPENAI_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
     assert isinstance(resolve_embedder(), HashingEmbedder)
     # 显式要求远程但没 key -> 仍然回退离线
     assert isinstance(resolve_embedder(prefer_remote=True), HashingEmbedder)
@@ -57,7 +59,7 @@ def test_resolve_embedder_defaults_offline(monkeypatch):
 
 def test_resolve_embedder_uses_glm_when_opted_in(monkeypatch):
     monkeypatch.setenv("AGENT_RAG_EMBEDDINGS", "glm")
-    monkeypatch.setenv("GLM_API_KEY", "test-key")
+    monkeypatch.setenv("LLM_API_KEY", "test-key")
     assert isinstance(resolve_embedder(), GLMEmbedder)
 
 

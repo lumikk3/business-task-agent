@@ -5,12 +5,13 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 
-from app.agent.llm_client import ChatClient, LLMConfig
+from app.agent.llm_client import ChatClient, LLMConfig, _load_env_file
 from app.agent.minimal_agent import MinimalAgent, build_system_prompt
 from app.agent.permissions import PermissionPolicy
 from app.memory.session import SessionMemory
@@ -91,6 +92,19 @@ def test_step5_registry_adds_create_return_request():
     registry = build_minimal_registry(tools, RETURN_TOOLS)
     assert "create_return_request" in registry.names()
     assert registry.risk_level("create_return_request").value == "MEDIUM"
+
+
+def test_load_env_file_supports_project_dotenv(tmp_path, monkeypatch):
+    env_path = tmp_path / ".env"
+    env_path.write_text("GLM_API_KEY=glm-test\nOPENAI_MODEL=gpt-4o-mini\n", encoding="utf-8")
+
+    monkeypatch.delenv("GLM_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+
+    _load_env_file(env_path)
+
+    assert os.environ["GLM_API_KEY"] == "glm-test"
+    assert os.environ["OPENAI_MODEL"] == "gpt-4o-mini"
 
 
 def test_system_prompt_only_describes_available_tools():

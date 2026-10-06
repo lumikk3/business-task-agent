@@ -157,6 +157,11 @@ class ToolExecutor:
                         risk_level=spec.risk_level,
                     )
                 self._sleep(min(self.backoff_base * (2 ** (attempts - 1)), self.backoff_max))
+            except ConnectionError:
+                # 基础设施故障（数据库/依赖不可达）：这不是"工具调用失败",而是后端挂了。
+                # 若按普通失败回灌,LLM 会拿着注定失败的工具反复重试,把一次请求拖到
+                # 客户端超时。交给上层（Agent/API）决定如何降级（例如回 503）。
+                raise
             except Exception as exc:  # unexpected handler bug — do not retry
                 return ToolResult(
                     tool=name, ok=False, error=f"{type(exc).__name__}: {exc}",
@@ -170,12 +175,21 @@ class ToolExecutor:
         try:
             kwargs = {k: arguments[k] for k in spec.parameters.get("properties", {})
                       if k in arguments}
-            with ThreadPoolExecutor(max_workers=1) as pool:
-                future = pool.submit(spec.handler, **kwargs)
-                return future.result(timeout=self.timeout_s)
+        except Exception as exc:                          # pragma: no cover
+            raise ToolError(f"bad arguments for {spec.name}: {exc}",
+                            ErrorType.VALIDATION, retryable=False) from exc
+        pool = ThreadPoolExecutor(max_workers=1)
+        try:
+            future = pool.submit(spec.handler, **kwargs)
+            return future.result(timeout=self.timeout_s)
         except FuturesTimeoutError:
             raise ToolError(f"tool timed out after {self.timeout_s}s: {spec.name}",
                             ErrorType.TIMEOUT, retryable=True) from None
+        finally:
+            # 关键：不能 wait=True。卡住的 handler 线程（例如数据库 socket 假死）
+            # 会让 `with ThreadPoolExecutor(...)` 在退出时阻塞等待，把「5s 超时」
+            # 实际变成十几秒，超时语义整个失效。
+            pool.shutdown(wait=False, cancel_futures=True)
 
     def _validate(self, spec: ToolSpec, arguments: dict) -> None:
         required = spec.parameters.get("required", [])

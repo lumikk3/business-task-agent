@@ -234,7 +234,7 @@ docker compose version
 
 ```bash
 cd ~/agent-test/business-task-agent
-cp .env.example .env       # 填 GLM_API_KEY（不填则回退确定性 Runtime）
+cp .env.example .env       # 填 LLM_API_KEY（不填则回退确定性 Runtime）
 docker compose up --build
 ```
 
@@ -282,7 +282,7 @@ docker compose down -v       # 连数据一起删
 | `docker compose` 报 `unknown command` | 装的是老版 compose v1；用 `docker-compose up` 或升级 Docker Desktop |
 | `postgres` 容器起来但连不上 | 第一次启动要等 `pg_isready`；compose 里已配 healthcheck，`agent-api` 会等它 |
 | 端口 8077 被占 | 改 `docker-compose.yml` 里 `agent-api.ports` 的左边 |
-| GLM 不生效 | `.env` 里的 `GLM_API_KEY` 要真实；`/health` 的 `mode` 是 `rule` 说明没读到 |
+| LLM 不生效 | `.env` 里的 `LLM_API_KEY` 要真实；`/health` 的 `mode` 是 `rule` 说明没读到 |
 
 ### B7. 不想装 Docker 怎么办
 
@@ -327,3 +327,51 @@ python -m uvicorn app.api.server:app --port 8080 &
 curl localhost:8080/health
 scripts/dev_services.sh down
 ```
+
+---
+
+## 5. 运维韧性：数据库挂了/重启了，API 会怎样（实测）
+
+一键验证脚本（会重启数据库并密集探测，报告失败次数与恢复耗时）：
+
+```bash
+# 对 Docker 里的 postgres
+python scripts/check_pg_resilience.py \
+    --dsn "postgresql://hermes:hermes@127.0.0.1:5433/business" \
+    --restart-cmd "docker compose restart postgres"
+
+# 对 scripts/dev_services.sh 起的本地实例
+eval "$(scripts/dev_services.sh env)"
+python scripts/check_pg_resilience.py \
+    --restart-cmd "scripts/dev_services.sh down && scripts/dev_services.sh up"
+```
+
+实测行为矩阵（agent-api 容器不重启）：
+
+| 场景 | /health | /api/chat | 恢复 |
+| --- | --- | --- | --- |
+| 正常 | 200 (16ms) `postgres:true` | 200 | — |
+| **PG 重启**（容器还在，端口短暂不可用） | 200 `postgres:false`（诚实） | **200 成功**——请求自己扛过重启窗口 | 自动，无需重启应用 |
+| **PG 停机**（容器停掉，主机名解析不了） | 200 (~7.5s) `postgres:false` | **503**（~3.7s，带明确原因） | PG 回来后自动恢复 |
+| **agent-api 容器没起来** | — | **502**（Docker 端口代理：端口有映射但无监听） | 容器起来即恢复 |
+
+实现要点（都在 `app/store_pg.py` / `app/api/server.py`）：
+
+1. **执行前预检 + 有界重连退避**：连接已断开就先重连（不重复执行语句），
+   `Connection refused` 会退避重试（扛住重启窗口）；**主机名解析失败则不重试**（服务真没了，重试没意义）。
+2. **请求准入探测**（`ping_resilient`）：每个请求前用 2 次尝试探一次库，
+   数据库真不可用时**快速回 503**，而不是进 Agent 循环干等（曾实测被拖到 60s+）。
+3. **/health 用一次性短探测**（`ping(fast=True)`，1s 超时、**新建短连接**）：
+   不碰可能"假死"的缓存连接，保证健康检查秒回真相。
+4. **不把基础设施故障当工具失败**：`ToolExecutor` 遇到 `ConnectionError` 直接上抛
+   （否则 LLM 会拿着注定失败的工具反复重试）；同时修掉了线程池 `wait=True`
+   导致「5s 超时实际阻塞十几秒」的坑。
+
+排错速查：
+
+| 现象 | 含义 | 处理 |
+| --- | --- | --- |
+| 502 | 端口有映射但容器没监听（容器没起来/正在重启） | `docker compose ps` 看容器状态；`docker compose up -d` |
+| 503 + `后端数据库不可用` | 数据库不可达（已熔断） | 看 `docker compose ps postgres`；`/health` 的 `checks` 会显示 false |
+| /health 里 `postgres:false` 但 chat 正常 | 探测瞬间数据库还没就绪 | 正常，下一个请求即恢复 |
+| `AdminShutdown` / `connection closed` | 连接被服务端终止（重启/被杀） | 已自动重连；若仍报错请贴 `check_pg_resilience.py` 输出 |

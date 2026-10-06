@@ -2,7 +2,7 @@
 
 Same `decide(ctx) -> Decision` contract as RuleBasedBrain, but the next action
 is chosen by an LLM through the tool schemas from the registry. Used when
-OPENAI_API_KEY is configured; the demo defaults to the deterministic brain.
+MIMO_API_KEY or OPENAI_API_KEY is configured; the demo defaults to the deterministic brain.
 """
 from __future__ import annotations
 
@@ -10,9 +10,12 @@ import json
 import os
 import urllib.request
 
+from app.agent.llm_client import _load_default_env_files, has_llm_credentials as client_has_llm_credentials, resolve_llm_config
 from app.agent.brain import Decision
 from app.memory.context import TaskContext
 from app.tools.registry import ToolRegistry
+
+_load_default_env_files()
 
 _SYSTEM_PROMPT = (
     "你是电商售后客服Agent。根据用户问题和已有的工具执行结果,决定下一步:"
@@ -23,7 +26,7 @@ _SYSTEM_PROMPT = (
 
 
 def has_llm_credentials() -> bool:
-    return bool(os.environ.get("OPENAI_API_KEY"))
+    return client_has_llm_credentials()
 
 
 class OpenAIBrain:
@@ -31,11 +34,12 @@ class OpenAIBrain:
                  api_key: str | None = None, model: str | None = None,
                  timeout_s: float = 60.0):
         self.registry = registry
-        self.base_url = (base_url or os.environ.get("OPENAI_BASE_URL")
-                         or "https://api.openai.com/v1").rstrip("/")
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
-        self.model = model or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
-        self.timeout_s = timeout_s
+        config = resolve_llm_config(base_url=base_url, api_key=api_key,
+                                    model=model, timeout_s=timeout_s)
+        self.base_url = config.base_url
+        self.api_key = config.api_key
+        self.model = config.model
+        self.timeout_s = config.timeout_s
 
     # ------------------------------------------------------------------
     def decide(self, ctx: TaskContext) -> Decision:

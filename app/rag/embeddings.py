@@ -16,6 +16,7 @@ import math
 import zlib
 from typing import Protocol
 
+from app.agent.llm_client import ChatClient, has_llm_credentials
 from app.rag.tokenize import tokens
 
 DIM = 256
@@ -90,10 +91,6 @@ def resolve_embedder(prefer_remote: bool | None = None, client=None) -> Embedder
     if prefer_remote is None:
         prefer_remote = os.environ.get("AGENT_RAG_EMBEDDINGS", "").lower() == "glm"
     if not prefer_remote:
-        return HashingEmbedder()
-    try:
-        from app.agent.llm_client import ChatClient, has_llm_credentials
-    except Exception:                                    # pragma: no cover
         return HashingEmbedder()
     if not has_llm_credentials():
         return HashingEmbedder()

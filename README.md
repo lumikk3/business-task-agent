@@ -62,16 +62,16 @@ python scripts/generate_data.py --stats
 # 2) 建立售后知识库（50~100 份规则文档）
 python scripts/generate_policies.py
 
-# 3) Step 3~6：最小版 Agent（3+1 个工具、3 个基础问题 + 退货任务），需要 GLM_API_KEY
+# 3) Step 3~6：最小版 Agent（3+1 个工具、3 个基础问题 + 退货任务），需要 .env 中的 LLM_API_KEY
 python scripts/run_minimal_agent.py
 
 # 4) Step 7~13：Planner / 记忆 / 异常恢复 / 权限 / MCP / Trace
 python scripts/run_planner_demo.py
-python scripts/run_memory_agent.py        # 需 GLM_API_KEY
+python scripts/run_memory_agent.py        # 需 .env 中的 LLM_API_KEY
 python scripts/run_fault_demo.py
 python scripts/run_permission_demo.py
 python scripts/run_trace_demo.py
-python scripts/run_mcp_agent.py --probe   # 完整版去掉 --probe,需 GLM_API_KEY
+python scripts/run_mcp_agent.py --probe   # 完整版去掉 --probe,需 .env 中的 LLM_API_KEY
 
 # 5) Step 14~16：Eval / Bad Case / Regression（真实跑 200 条）
 python -m eval.evaluator.run_eval
@@ -115,13 +115,18 @@ Demo 输出示例：
 
 ### 使用 LLM 决策（可选）
 
-设置 `OPENAI_API_KEY` 后，`run_demo.py` 会自动切换到 `OpenAIBrain`，通过
-OpenAI 兼容的 function calling 选择下一步动作：
+在项目根目录 `.env` 中设置统一的 `LLM_*` 配置后，`run_demo.py` 会自动切换到
+LLM Brain。以后更换 MiMo、OpenAI 或其他 OpenAI 兼容模型只需修改这三项：
+
+```env
+LLM_API_KEY=your_api_key
+LLM_BASE_URL=https://api.xiaomimimo.com/v1
+LLM_MODEL=mimo-v2-flash
+```
+
+然后运行：
 
 ```bash
-export OPENAI_API_KEY=sk-...
-export OPENAI_BASE_URL=https://api.openai.com/v1   # 可选，兼容任意 OpenAI 协议端点
-export OPENAI_MODEL=gpt-4o-mini                    # 可选
 python scripts/run_demo.py
 ```
 
@@ -176,8 +181,8 @@ logistics（状态与订单一致），after_sale 只挂在已签收订单上，
 项目按阶段往上长，每一步都有可运行的 demo。完整版（Planner + 6 工具 + 权限 + 人工接管 +
 Trace）在 `app/agent/runtime.py`，最小版与它共用同一套工具层与数据层。
 
-GLM 接入（OpenAI 兼容）：`GLM_API_KEY` 必填，`GLM_BASE_URL` 默认
-`https://open.bigmodel.cn/api/paas/v4`，`GLM_MODEL` 默认 `glm-4.6`（见「配置项」）。
+LLM 接入采用 OpenAI 兼容协议，运行时只读取统一的 `LLM_API_KEY`、`LLM_BASE_URL`、
+`LLM_MODEL`。默认配置为 Xiaomi MiMo；切换其他兼容服务只需要修改 `.env`。
 
 ### Step 3 / 4：最基础 Agent + 三个工具
 
@@ -437,6 +442,17 @@ python -m uvicorn app.api.server:app --port 8077
 | `GET /api/eval/runs` | 历史评测报告 |
 | `GET /api/bad-cases` | Bad Case 列表 |
 | `GET /` | 极简客服工作台（含确认流程） |
+| `GET /health` | 存活探针（永远 200）；`checks` 反映 PostgreSQL/Redis 真实可达性 |
+
+数据库重启/不可用时的行为（实测，详见 [DEPLOY.md](DEPLOY.md) §5）：
+
+```text
+PG 重启（容器还在）   -> /api/chat 200 成功（请求自己扛过重启窗口）,应用无需重启
+PG 停机（真不可用）   -> /api/chat 503 + 明确原因（~3.7s）,PG 回来后自动恢复
+agent-api 容器没起来  -> 502（Docker 端口代理：有映射但无监听）
+```
+
+验证脚本：`python scripts/check_pg_resilience.py --restart-cmd "docker compose restart postgres"`
 
 实测（LLM 模式）：
 
@@ -630,8 +646,9 @@ business-task-agent/
 │   ├── dev_services.sh           # Step 18：免 root 起真实 PostgreSQL + Redis
 │   ├── migrate_to_pg.py          # Step 18：SQLite -> PostgreSQL（幂等）
 │   ├── run_pg_redis_demo.py      # Step 18：验证 Agent 跑在 PG + Redis 上
+│   ├── check_pg_resilience.py    # 数据库重启/不可用时的自动恢复验证
 │   └── run_demo.py               # 完整版六场景 Demo 入口
-├── tests/                        # 97 个测试（+3 个 PG/Redis 集成测试,无服务时 skip）
+├── tests/                        # 119 个测试（+4 个真实 PG/Redis 集成测试,无服务时 skip）
 ├── docker/                       # Step 20：Dockerfile + postgres/init.sql
 ├── docker-compose.yml            # Step 20：一键起
 ├── requirements-optional.txt     # mcp / fastapi / uvicorn
@@ -766,12 +783,10 @@ error / retry_count`，供后续 Eval 引擎与 Bad Case 分析回放整条执�
 
 | 环境变量 | 作用 | 默认 |
 | --- | --- | --- |
-| `GLM_API_KEY` | 最小版 Agent 调 GLM 的密钥（优先） | 未设置 |
-| `GLM_BASE_URL` | GLM 端点 | `https://open.bigmodel.cn/api/paas/v4` |
-| `GLM_MODEL` | GLM 模型名 | `glm-4.6`（可选 glm-4-flash / glm-4-plus / glm-4-air …） |
+| `LLM_API_KEY` | 当前 LLM 服务的密钥 | 未设置 |
+| `LLM_BASE_URL` | 当前 LLM 的 OpenAI 兼容端点 | `https://api.xiaomimimo.com/v1` |
+| `LLM_MODEL` | 当前模型名 | `mimo-v2-flash` |
 | `AGENT_RAG_EMBEDDINGS` | 设为 `glm` 用 GLM embedding 做语义检索，否则离线 | 离线 `HashingEmbedder` |
-| `OPENAI_API_KEY` | 回退密钥；设置后 `run_demo.py` 使用 `OpenAIBrain` | 未设置 |
-| `OPENAI_BASE_URL` / `OPENAI_MODEL` | 回退端点 / 模型 | `https://api.openai.com/v1` / `gpt-4o-mini` |
 | `AGENT_DB_PATH` | 业务库路径（`open_store()`） | `data/business.db` |
 | `DATABASE_URL` / `REDIS_URL` | Step 18：Postgres / Redis 连接串（⚠️ 未在本机验证） | 见 `DEPLOY.md` |
 | `AGENT_DEMO_TODAY` | 覆盖 Demo 的「今天」（`YYYY-MM-DD`），影响时效判断 | `2026-09-27` |
@@ -785,7 +800,7 @@ backoff_base, backoff_max)`、`PermissionPolicy(auto_max, confirm_max)`）均可
 ## 测试
 
 ```bash
-python -m pytest -q          # 97 passed（起了 PG/Redis 则额外 3 个集成测试也跑）
+python -m pytest -q          # 119 passed（起了 PG/Redis 则额外 4 个集成测试也跑）
 ```
 
 覆盖范围（`tests/`）：
@@ -801,7 +816,9 @@ python -m pytest -q          # 97 passed（起了 PG/Redis 则额外 3 个集成
 | `test_mcp_bridge.py` | 真实拉起 3 台 MCP Server、工具发现、入参 schema 正确、stdio 往返调用（无 mcp 包时 skip） |
 | `test_eval_harness.py` | 数据集规模/确定性、真实评测指标、Bad Case 分类、Regression pass→fail 检测 |
 | `test_deploy_artifacts.py` | DDL 与 init.sql 表名一致、PgStore 与 Store 同接口、无依赖也能 import、compose/Dockerfile/requirements 齐备 |
-| `test_pg_redis_integration.py` | **真实** PostgreSQL/Redis：PgStore 与 Store 结果一致、Agent 写穿到 PG、Redis 会话跨实例可读（服务未起时自动 skip） |
+| `test_pg_redis_integration.py` | **真实** PostgreSQL/Redis：PgStore 与 Store 结果一致、Agent 写穿到 PG、Redis 会话跨实例可读、`pg_terminate_backend` 制造 AdminShutdown 后自动恢复（服务未起时自动 skip） |
+| `test_pg_resilience.py` | 断线重连策略：预检重连、执行中掉线重试一次、SQL 错误不被吞、解析失败不重试、超时不等卡死线程 |
+| `test_api_service.py` | 数据库不可用时 API 的降级语义：快速 503、/health 的 checks 反映真实可达性 |
 | `test_intents.py` | 七类意图识别与优先级 |
 | `test_llm_brain.py` | LLM Brain 解析 tool_calls / 最终回答（本地 fake server，无网络） |
 | `test_policy_rag.py` | query rewrite、检索与 rerank、政策命中 |

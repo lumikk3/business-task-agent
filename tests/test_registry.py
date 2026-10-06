@@ -127,3 +127,41 @@ def test_unexpected_handler_crash_is_not_retried():
     assert "RuntimeError" in result.error
     assert result.attempts == 1
     assert calls["n"] == 1
+
+
+def test_timeout_does_not_wait_for_hung_handler():
+    """超时必须真的"超时"：不能因为等待卡死的 handler 线程而变成阻塞。
+
+    真实场景：数据库 socket 假死时 handler 会卡住很久，如果退出线程池时
+    wait=True，一次「5s 超时」实际会阻塞十几秒，请求被拖垮。
+    """
+
+    def stuck(value):
+        time.sleep(2.0)          # 模拟 socket 假死
+        return {"echo": value}
+
+    registry = ToolRegistry()
+    registry.register(_spec(handler=stuck))
+    executor = ToolExecutor(registry, max_retries=0, timeout_s=0.05,
+                            sleep=lambda _s: None)
+    start = time.perf_counter()
+    result = executor.execute("demo", {"value": "x"})
+    elapsed = time.perf_counter() - start
+
+    assert result.ok is False
+    assert result.error_type == ErrorType.TIMEOUT
+    assert elapsed < 1.0, f"超时后仍阻塞了 {elapsed:.2f}s（线程池 wait=True 的坑）"
+
+
+def test_connection_error_propagates_instead_of_becoming_tool_result():
+    """数据库/依赖不可达是"后端挂了",不是工具调用失败——必须抛给上层降级。"""
+
+    def down(value):
+        raise ConnectionError("PostgreSQL 不可用")
+
+    registry = ToolRegistry()
+    registry.register(_spec(handler=down))
+    executor = ToolExecutor(registry, max_retries=2, sleep=lambda _s: None)
+
+    with pytest.raises(ConnectionError):
+        executor.execute("demo", {"value": "x"})

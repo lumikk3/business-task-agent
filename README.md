@@ -53,6 +53,8 @@
 
 ## 快速开始
 
+> 只想把项目跑起来？看 **启动手册 [RUNBOOK.md](RUNBOOK.md)** —— 分「初次运行」与「再次运行」两条路径，含预期输出与排查表。
+
 要求：Python 3.10+（开发环境使用 3.14）。
 
 ```bash
@@ -655,6 +657,7 @@ business-task-agent/
 ├── requirements-db.txt           # psycopg / redis
 ├── .env.example                  # 环境变量模板
 └── DEPLOY.md                     # Step 18/20 保姆级操作手册
+└── RUNBOOK.md                    # 启动手册（初次运行 / 再次运行）
 ```
 
 ---
@@ -788,7 +791,7 @@ error / retry_count`，供后续 Eval 引擎与 Bad Case 分析回放整条执�
 | `LLM_MODEL` | 当前模型名 | `mimo-v2-flash` |
 | `AGENT_RAG_EMBEDDINGS` | 设为 `glm` 用 GLM embedding 做语义检索，否则离线 | 离线 `HashingEmbedder` |
 | `AGENT_DB_PATH` | 业务库路径（`open_store()`） | `data/business.db` |
-| `DATABASE_URL` / `REDIS_URL` | Step 18：Postgres / Redis 连接串（⚠️ 未在本机验证） | 见 `DEPLOY.md` |
+| `DATABASE_URL` / `REDIS_URL` | Step 18：Postgres / Redis 连接串（不设则回退 SQLite + 进程内记忆） | 见 `DEPLOY.md` |
 | `AGENT_DEMO_TODAY` | 覆盖 Demo 的「今天」（`YYYY-MM-DD`），影响时效判断 | `2026-09-27` |
 
 运行时参数（如 `AgentRuntime(max_steps=8)`、`ToolExecutor(max_retries, timeout_s,

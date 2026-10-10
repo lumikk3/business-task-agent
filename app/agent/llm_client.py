@@ -16,8 +16,10 @@ MiMo 提供 OpenAI 兼容接口，所以这里沿用标准方式：POST
 """
 from __future__ import annotations
 
+import http.client
 import json
 import os
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -26,6 +28,9 @@ from pathlib import Path
 DEFAULT_MIMO_BASE_URL = "https://api.xiaomimimo.com/v1"
 DEFAULT_MIMO_MODEL = "mimo-v2-flash"
 DEFAULT_EMBEDDING_MODEL = "embedding-3"
+# 传输层偶发故障（分块响应被截断、连接被重置）的重试预算
+TRANSPORT_RETRIES = int(os.environ.get("LLM_TRANSPORT_RETRIES", "3"))
+TRANSPORT_BACKOFF = float(os.environ.get("LLM_TRANSPORT_BACKOFF", "0.5"))
 
 
 @dataclass
@@ -134,6 +139,12 @@ class ChatClient:
 
     # ------------------------------------------------------------------
     def _post(self, path: str, body: dict) -> dict:
+        """POST 并在**传输层偶发故障**时重试。
+
+        真实遇到过：端点把分块响应中途断掉，抛 ``IncompleteRead``，
+        一次网络抖动就让整个 Demo 崩掉。这类错误重试通常就好了，
+        所以在这里统一重试；4xx（请求本身有问题）不重试。
+        """
         request = urllib.request.Request(
             f"{self.config.base_url}{path}",
             data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
@@ -143,11 +154,19 @@ class ChatClient:
             },
             method="POST",
         )
-        try:
-            with urllib.request.urlopen(request, timeout=self.config.timeout_s) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:            # 4xx/5xx：带上响应体
-            detail = exc.read().decode("utf-8", "replace")
-            raise LLMError(f"LLM HTTP {exc.code}: {detail}") from exc
-        except urllib.error.URLError as exc:             # 网络层
-            raise LLMError(f"LLM connection error: {exc.reason}") from exc
+        last: LLMError | None = None
+        for attempt in range(1, TRANSPORT_RETRIES + 1):
+            try:
+                with urllib.request.urlopen(request, timeout=self.config.timeout_s) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as exc:        # 4xx/5xx：带上响应体
+                detail = exc.read().decode("utf-8", "replace")
+                if exc.code < 500 and exc.code != 429:
+                    raise LLMError(f"LLM HTTP {exc.code}: {detail}") from exc
+                last = LLMError(f"LLM HTTP {exc.code}: {detail}")
+            except (http.client.HTTPException, urllib.error.URLError,
+                    TimeoutError, ConnectionError) as exc:
+                last = LLMError(f"LLM 传输层错误（已尝试 {attempt} 次）: {exc}")
+            if attempt < TRANSPORT_RETRIES:
+                time.sleep(TRANSPORT_BACKOFF * attempt)
+        raise last if last is not None else LLMError("LLM 请求失败")

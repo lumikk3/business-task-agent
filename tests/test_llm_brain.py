@@ -103,3 +103,58 @@ def test_llm_variables_are_the_single_switch(monkeypatch):
     assert config.api_key == "mimo-test"
     assert config.base_url == "https://mimo.example/v1"
     assert config.model == "mimo-test-model"
+
+
+# ---- 传输层重试（真实遇到过：端点分块响应被截断 -> IncompleteRead 崩掉 Demo）----
+def test_post_retries_transient_transport_error(monkeypatch):
+    import http.client
+
+    import app.agent.llm_client as lc
+
+    calls = {"n": 0}
+
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return b'{"ok": true}'
+
+    def fake_urlopen(request, timeout=None):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise http.client.IncompleteRead(b"53 bytes")   # 模拟响应被中途截断
+        return _Resp()
+
+    monkeypatch.setattr(lc.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(lc.time, "sleep", lambda _seconds: None)
+
+    client = lc.ChatClient(lc.LLMConfig(base_url="http://x/v1", api_key="k", model="m"))
+    assert client.chat([{"role": "user", "content": "hi"}]) == {"ok": True}
+    assert calls["n"] == 2, "偶发传输错误应重试后成功"
+
+
+def test_post_does_not_retry_on_4xx(monkeypatch):
+    import io
+    import urllib.error
+
+    import app.agent.llm_client as lc
+
+    calls = {"n": 0}
+
+    def fake_urlopen(request, timeout=None):
+        calls["n"] += 1
+        raise urllib.error.HTTPError(
+            "http://x/v1/chat/completions", 400, "Bad Request", {},
+            io.BytesIO(b'{"error":"bad request"}'))
+
+    monkeypatch.setattr(lc.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.setattr(lc.time, "sleep", lambda _seconds: None)
+
+    client = lc.ChatClient(lc.LLMConfig(base_url="http://x/v1", api_key="k", model="m"))
+    with pytest.raises(lc.LLMError):
+        client.chat([{"role": "user", "content": "hi"}])
+    assert calls["n"] == 1, "请求本身有问题时不要重试"
